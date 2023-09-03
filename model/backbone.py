@@ -33,3 +33,19 @@ class Bottleneck(nn.Module):
 
     def forward(self, x):
         return self.conv2(self.conv1(x))
+
+
+class C3Layer(nn.Module):
+    # class C3Layer implements block CSP Bottleneck block in backbone containing 3 ConvLayer and Bottleneck using args:
+    # [input_channel, output_channel, num_bottleneck_layers groups, c_hidden_ratio]
+    def __init__(self, c_in, c_out, n=1, g=1, e=0.5):
+        super().__init__()
+        c_hidden = int(e * c_in)
+        self.conv1 = ConvLayer(c_in, c_hidden, 1, 1)
+        self.conv2 = ConvLayer(c_in, c_hidden, 1, 1)
+        self.conv3 = ConvLayer(2* c_hidden, c_out, 1, 1)
+        self.bottleneck = nn.Sequential(*(Bottleneck(c_hidden, c_hidden, 1, e=1) for _ in range(n)))
+
+    def forward(self, x):
+        return self.conv3(torch.cat((self.bottleneck(self.conv1(x)), self.conv2(x)), 1))
+        
