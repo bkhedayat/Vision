@@ -14,10 +14,7 @@ class ConvLayer(nn.Module):
     
     def forward(self, x):
         # apply CBS block input and return the output
-        x = self.conv(x)
-        x = self.bn(x)
-        x = self.activation(x)
-        return x
+        return self.activation(self.bn(self.conv(x)))
     
     def get_index(self):
         print(self.index)
