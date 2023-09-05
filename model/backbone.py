@@ -46,3 +46,18 @@ class C3Layer(nn.Module):
     def forward(self, x):
         return self.conv3(torch.cat((self.bottleneck(self.conv1(x)), self.conv2(x)), 1))
         
+class SPPF(nn.Module):
+    # implements Spatial Pyramid Pooling - Fast using followig args:
+    # [input_channel, output_channel, hiiden_ratio, kernel_size]
+    def __init__(self, c_in, c_out, e=2, k=5):
+        super().__init__()
+        c_hidden = c_in // e    # hidden channel size
+        self.conv1 = ConvLayer("SPPF_1", c_in, c_hidden, 1, 1)
+        self.conv2 = ConvLayer("SPPF_2", c_hidden *4 , c_out, 1, 1)
+        self.maxPool = nn.MaxPool2d(kernel_size=k, stride=1, padding=k//e)
+
+    def forward(self, x):
+        x = self.conv1(x)
+        max1 = self.maxPool(x)
+        max2 = self.maxPool(max1)
+        return self.conv2(torch.cat((x, max1, max2, self.maxPool(max2)), 1))
