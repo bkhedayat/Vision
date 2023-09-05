@@ -38,9 +38,9 @@ class C3Layer(nn.Module):
     def __init__(self, c_in, c_out, n=1, g=1, e=0.5):
         super().__init__()
         c_hidden = int(e * c_in)
-        self.conv1 = ConvLayer(c_in, c_hidden, 1, 1)
-        self.conv2 = ConvLayer(c_in, c_hidden, 1, 1)
-        self.conv3 = ConvLayer(2* c_hidden, c_out, 1, 1)
+        self.conv1 = ConvLayer("C3_1", c_in, c_hidden, 1, 1)
+        self.conv2 = ConvLayer("C3_2", c_in, c_hidden, 1, 1)
+        self.conv3 = ConvLayer("c3_3", 2* c_hidden, c_out, 1, 1)
         self.bottleneck = nn.Sequential(*(Bottleneck(c_hidden, c_hidden, 1, e=1) for _ in range(n)))
 
     def forward(self, x):
