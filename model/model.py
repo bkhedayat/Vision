@@ -11,7 +11,8 @@ class YamlParser:
     
     def parse_config(self):
         with open(self.file_name) as f:
-            model_config = yaml.load(f, Loader=yaml.FullLoader)
+            # parse yaml file safely for untrusted input
+            self.model_config = yaml.safe_load(f)
 
 
 class Model(nn.Module):
