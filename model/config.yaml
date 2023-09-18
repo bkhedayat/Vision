@@ -1,5 +1,10 @@
-# model backbone
+# num of output classes
+num_classes: 3
 
+# anchors
+anchors:
+
+# model backbone
 backbone:
   # [output, number of layers, type of layer, args]
   # output -1 means that the input of the current layer is the output of the last layer
