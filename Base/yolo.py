@@ -17,6 +17,7 @@ class YamlParser:
         # get different components from the model dictionary
         num_classes, anchors = dic['num_classes'], dic['anchors']
         for iter, (input, num_layers, type, args) in enumerate(dic["backbone"]):
+            print("Parsing backbone data:")
             print("{}, {}, {}, {}".format(input, num_layers, type, args))
         
             
