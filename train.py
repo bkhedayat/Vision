@@ -3,7 +3,7 @@ import os
 
 def AddPaths():
     # adds all the necessary paths to the system path
-    model_dir = os.getcwd() + "\\model"
+    model_dir = os.getcwd() + "\\Base"
     sys.path.append(model_dir)
     print("Path: {} added!".format(model_dir))
 
