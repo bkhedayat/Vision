@@ -12,6 +12,7 @@ anchors:
 backbone:
   # [output, number of layers, type of layer, args]
   # output -1 means that the input of the current layer is the output of the last layer
+  # args: [output_ch, kernel_size, stride, padding]
   [[-1, 1, ConvLayer, [64, 6, 2, 2]],  # 0-P1/2
    [-1, 1, ConvLayer, [128, 3, 2]],    # 1-P2/4
    [-1, 3, C3Layer  , [128]],
