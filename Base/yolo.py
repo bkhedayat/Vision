@@ -2,7 +2,7 @@ import yaml
 import torch
 import torch.nn as nn
 from copy import deepcopy
-
+from Base import backbone
 
 class YamlParser:
     # YamlParser parses yaml config file and create the model
@@ -15,10 +15,20 @@ class YamlParser:
     def parse_config(self, ch):
         dic = deepcopy(self.model_dic)
         # get different components from the model dictionary
-        num_classes, anchors = dic['num_classes'], dic['anchors']
+        # get number of classes
+        num_classes = dic["num_classes"]
+
+        print("Number of classes: {}".format(num_classes))
+
+        # get the anchor boxes
+        anchors = dic['anchors']
+        print("Anchor boxes: {}".format(anchors))
+        
         for iter, (input, num_layers, type, args) in enumerate(dic["backbone"]):
             print("Parsing backbone data:")
-            print("{}, {}, {}, {}".format(input, num_layers, type, args))
+            for i,j in enumerate(args):
+                pass
+        
         
             
 
@@ -30,4 +40,4 @@ class Model(nn.Module):
     def __init__(self, config="config.yaml", ch_number=3, class_number=1):
         super().__init__()
         self.parser = YamlParser(config)
-        self.model = self.parser.parse_config(ch_number)
+        self.model = self.parser.parse_config([ch_number])
