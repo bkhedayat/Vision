@@ -1,8 +1,12 @@
+import sys
 import yaml
 import torch
 import torch.nn as nn
 from copy import deepcopy
-from Base import backbone
+
+sys.path.append("./Base")
+
+from backbone import ConvLayer, C3Layer, SPPF
 
 class YamlParser:
     # YamlParser parses yaml config file and create the model
@@ -24,11 +28,19 @@ class YamlParser:
         anchors = dic['anchors']
         print("Anchor boxes: {}".format(anchors))
         
+        print("Parsing backbone data:")
         for iter, (input, num_layers, type, args) in enumerate(dic["backbone"]):
-            print("Parsing backbone data:")
-            for i,j in enumerate(args):
-                pass
-        
+            # create args list
+            for indx,value in enumerate(args):
+                args[indx] = eval(value) if isinstance(value, str) else value
+
+            # eval type of the layer
+            type = eval(type)
+            if type in {ConvLayer, C3Layer, SPPF}:
+                # assign the size of input and output channels       
+                c_in, c_out = ch[input], args[0]
+                args = [c_in, c_out, *args[1:]]
+
         
             
 
