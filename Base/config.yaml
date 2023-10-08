@@ -13,6 +13,8 @@ backbone:
   # [output, number of layers, type of layer, args]
   # output -1 means that the input of the current layer is the output of the last layer
   # args: [output_ch, kernel_size, stride, padding]
+  
+  # layer details:                     # Layer numbers:
   [[-1, 1, ConvLayer, [64, 6, 2, 2]],  # 0-P1/2
    [-1, 1, ConvLayer, [128, 3, 2]],    # 1-P2/4
    [-1, 3, C3Layer  , [128]],
@@ -23,4 +25,27 @@ backbone:
    [-1, 1, ConvLayer, [1024, 3, 2]],   # 7-P5/32
    [-1, 3, C3Layer  , [1024]],
    [-1, 1, SPPF     , [1024, 5]],      # 9
+  ]
+
+# model head
+head:
+  [[-1, 1, ConvLayer, [512, 1, 1]],
+   [-1, 1, nn.Upsample, [None, 2, "nearest"]],
+   [[-1, 6], 1, Concat, [1]],         # concat backbone P4
+   [-1, 3, C3Layer, [512]],           # 13
+   
+   [-1, 1, ConvLayer, [256, 1, 1]],
+   [-1, 1, nn.Upsample, [None, 2, "nearest"]],
+   [[-1, 4], 1, Concat, [1]],         # concat backbone P3
+   [-1, 3, C3Layer, [256]],           # 17 - P3/8 small objects
+
+   [-1, 1, ConvLayer, [256, 3, 2]],
+   [[-1, 14], 1, Concat, [1]],        # concat head P4
+   [-1, 3, C3Layer, [512]],           # 20 - P4/16 medium objects
+
+   [-1, 1, ConvLayer, [512, 3, 2]],
+   [[-1, 10], 1, Concat, [1]]         # concat head P5
+   [-1, 3, C3Layer, [1024]],          # 23 - P5/32 Large objects
+
+   [[17, 20 , 23], 1, Detect, [num_classes, anchors]],  # Detect P3, P4, P5
   ]
