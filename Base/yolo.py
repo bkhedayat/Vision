@@ -7,6 +7,8 @@ from copy import deepcopy
 sys.path.append("./Base")
 
 from backbone import ConvLayer, C3Layer, SPPF
+from neck import Concat
+from head import Detect
 
 class YamlParser:
     # YamlParser parses yaml config file and create the model
@@ -28,15 +30,17 @@ class YamlParser:
         anchors = dic['anchors']
         print("Anchor boxes: {}".format(anchors))
         
-        print("Parsing backbone and head data:")
+        print("Parsing backbone, neck and head data:")
         layers = []
-        for iter, (input_from, num_layers, layer_type, args) in enumerate(dic["backbone"]):
+        for iter, (input_from, num_layers, layer_type, args) in enumerate(dic["backbone"] + dic["neck"] + dic["head"]):
             # create args list
             for indx,value in enumerate(args):
                 args[indx] = eval(value) if isinstance(value, str) else value
 
             # edit args lits based on the layer type 
             layer_type = eval(layer_type)
+
+            # backbone and neck layers
             if layer_type in {ConvLayer, C3Layer, SPPF}:
                 # assign the size of input and output channels       
                 c_in, c_out = ch[input_from], args[0]
@@ -45,6 +49,14 @@ class YamlParser:
                 # C3 layers has more than 1 layer
                 if layer_type is C3Layer:
                     args.insert(2, num_layers)
+            
+            # neck Concat layer 
+            elif layer_type is Concat:
+                c_out = sum(ch[layer] for layer in input_from) 
+
+            # head Detection layer
+            elif layer_type is Detect:
+                args.append([ch[layer] for layer in input_from])    
 
             # create a sequential module of layers    
             module = nn.Sequential(*(layer_type(*args) for _ in range(num_layers))) if num_layers > 1 else layer_type(*args)
