@@ -45,19 +45,20 @@ class Detect(nn.Module):
         # inference output
         inference = []
         for i in range(self.num_detect_layers):
-            # conv
+            # select the output conv layer
             x[i] = self.modelList[i](x[i])
             
-            # x(bs,255,20,20) to x(bs,3,20,20,85)
+            # getting the shape sizes of the conv layer 
             bs, _, ny, nx = x[i].shape
 
+            # change the shape of layer x from (bs,255,20,20) to (bs,3,20,20,85)
             x[i] = x[i].view(bs, self.num_anchors, self.num_outputs, ny, nx).permute(0, 1, 3, 4, 2).contigous()
 
             # inference mode
             if not self.training:  
                 if self.dynamic or self.grid[i].shape[2:4] != x[i].shape[2:4]:
                     self.grid[i], self.grid_anchor[i] = self.make_grid(nx, ny, i)
-                    xy, wh, conf = x[i].sigmoid().split((2, 2, self.nc + 1), 4)
+                    xy, wh, conf = x[i].sigmoid().split((2, 2, self.num_class + 1), 4)
                     xy = (xy * 2 + self.grid[i]) * self.stride[i]  # xy
                     wh = (wh * 2) ** 2 * self.grid_anchor[i]  # wh
                     y = torch.cat((xy, wh, conf), 4)
@@ -65,7 +66,7 @@ class Detect(nn.Module):
 
         return x if self.training else (torch.cat(inference, 1), ) if self.export else (torch.cat(inference, 1), x)
 
-    def _make_grid(self, nx=20, ny=20, i=0):
+    def make_grid(self, nx=20, ny=20, i=0):
         d = self.anchors[i].device
         t = self.anchors[i].dtype
         shape = 1, self.na, ny, nx, 2  # grid shape
