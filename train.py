@@ -1,19 +1,33 @@
 import sys
 import os
+from pathlib import Path
 from Base.yolo import Model
+
+import argparse
+
+# create a relative path from existing root directory
+# get the path of the train.py
+TRAIN = Path(__file__).resolve()
+
+# get the first parrent dir as ROOT
+ROOT = TRAIN.parents[0]
+
+# add the ROOT to sys.path
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+
+# create a relative of the ROOT
+ROOT = Path(os.path.relpath(ROOT, Path.cwd()))
+
+
+def parse_args():
+    # argument parser to parser input from CLI
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--weights", type=str, default=ROOT)
 
 def init():
     sw_version = 0.1
     print_version(sw_version)
-    
-    # add paths to systems
-    add_paths()
-
-def add_paths():
-    # adds all the necessary paths to the system path
-    model_dir = os.getcwd() + "\\Base"
-    sys.path.append(model_dir)
-    print("Path: {} added!".format(model_dir))
 
 def create_yolo_model():
     # creates yolo model and return it
@@ -26,7 +40,7 @@ def train():
 
 def print_version(version):
     print("\n ###############################################\n")
-    print("         TAKAM, Software version: {}".format(version))
+    print("         JARVIS, Software version: {}".format(version))
     print("\n ###############################################\n")
 
 if __name__ == "__main__":
