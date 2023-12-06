@@ -6,3 +6,5 @@ def check_file(file):
     file = str(file)
     if os.path.isfile(file):
         return file
+    else :
+        return ""
