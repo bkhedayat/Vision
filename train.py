@@ -2,6 +2,8 @@ import sys
 import os
 from pathlib import Path
 from Base.yolo import Model
+from Utils.utils import check_file
+import torch
 
 import argparse
 
@@ -19,12 +21,29 @@ if str(ROOT) not in sys.path:
 # create a relative of the ROOT
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))
 
-def init():
+def train(inputs, device, callbacks):
+    # starts training
+    pass
+
+def init(callbacks=Callbacks()):
+    # log intro
     sw_version = 0.1
     print_version(sw_version)
 
     # parse arguments
-    args = parse_args()
+    inputs = parse_args()
+
+    # get the parameters from the inputs and check if they exist
+    inputs.data, inputs.config, input.weights = check_file(inputs.data), check_file(inputs.config), str(inputs.weights)
+    assert len(inputs.data), "init: ERROR: data.yaml is missing"
+    assert len(inputs.config), "init: ERROR: config.yaml is missing"
+    assert len(inputs.weights), "init: ERROR: model weights 'XXX.pt' is missing"
+
+    # get the torch device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # start training
+    train(inputs, device, Callbacks)
 
 def parse_args():
     # parse the args from CLI
@@ -33,7 +52,7 @@ def parse_args():
     parser.add_argument("--config", type= str, default=ROOT/"Base/config.yaml.", help="path of config yaml")
     parser.add_argument("--data", type=str, default=ROOT/"data", help="path of data yaml file")
     parser.add_argument("--epochs", type=int, default=100, help="number of trainning iterations")
-    parser.add_argument("--batch-size", type=int default=8, help="input batch size")
+    parser.add_argument("--batch-size", type=int, default=8, help="input batch size")
     parser.add_argument("--input-size", type=int, default=512, help="input size of image in pixels")
     return parser.parse_args()
 
@@ -41,10 +60,6 @@ def create_yolo_model():
     # creates yolo model and return it
     vision_model = Model("Base/config.yaml", 3)
     return vision_model
-s
-def train():
-    # starts training
-    pass
 
 def print_version(version):
     print("\n ###############################################\n")
