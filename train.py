@@ -22,7 +22,22 @@ if str(ROOT) not in sys.path:
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))
 
 def train(inputs, device):
-    # starts training
+    """
+    trains the model 
+    """
+    # define output dir and create it
+    output = ROOT/"output"
+    output.mkdir(parents=True, exist_ok=True)
+
+    # define weights dir and create it
+    weights_dir = output/"weights_dir"
+    weights_dir.mkdir(parents=True, exist_ok=True)
+
+    # define best and last weights
+    last = weights_dir/"last.pt"
+    best = weights_dir/"best.pt"
+
+
     pass
 
 def init():
