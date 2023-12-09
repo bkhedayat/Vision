@@ -21,11 +21,11 @@ if str(ROOT) not in sys.path:
 # create a relative of the ROOT
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))
 
-def train(inputs, device, callbacks):
+def train(inputs, device):
     # starts training
     pass
 
-def init(callbacks=Callbacks()):
+def init():
     # log intro
     sw_version = 0.1
     print_version(sw_version)
@@ -43,7 +43,7 @@ def init(callbacks=Callbacks()):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # start training
-    train(inputs, device, Callbacks)
+    train(inputs, device)
 
 def parse_args():
     # parse the args from CLI
