@@ -1,0 +1,24 @@
+# data augmentation hyperparameters
+
+# HSV
+hue: 0.015  # Hue fraction
+
+saturation: 0.7  # Saturation fraction
+
+value: 0.4  # Value fraction
+
+rotation: 0.0  # rotation degree
+
+translate: 0.1  # translation fraction
+
+scale: 0.5  # scale fraction
+
+shear: 0.0  # shear degree
+
+flip-v: 0.5  # flip probability: vertical
+
+flip-h: 0.0  # flip probability: horizontal
+
+mosaic: 1.0  # mosaic probability
+
+mixup: 0.0  # mixup probability
