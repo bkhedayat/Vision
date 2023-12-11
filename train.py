@@ -49,10 +49,12 @@ def init():
     inputs = parse_args()
 
     # get the parameters from the inputs and check if they exist
-    inputs.data, inputs.config, input.weights = check_file(inputs.data), check_file(inputs.config), str(inputs.weights)
+    inputs.data, inputs.config, inputs.weights, inputs.hyp = \
+          check_file(inputs.data), check_file(inputs.config), str(inputs.weights), check_file(inputs.train-hyp)
     assert len(inputs.data), "init: ERROR: data.yaml is missing"
     assert len(inputs.config), "init: ERROR: config.yaml is missing"
     assert len(inputs.weights), "init: ERROR: model weights 'XXX.pt' is missing"
+    assert len(inputs.hyp), "init: ERROR: hyp.yaml is missing"
 
     # get the torch device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -66,6 +68,7 @@ def parse_args():
     parser.add_argument("--weights", type=str, default=ROOT/"yolov5.pt", help="path of weights")
     parser.add_argument("--config", type= str, default=ROOT/"Base/config.yaml.", help="path of config yaml")
     parser.add_argument("--data", type=str, default=ROOT/"data", help="path of data yaml file")
+    parser.add_argument("--hyp", type=str, defualt=ROOT/"hyperparam.yaml", help="training hyperparameters yaml file")
     parser.add_argument("--epochs", type=int, default=100, help="number of trainning iterations")
     parser.add_argument("--batch-size", type=int, default=8, help="input batch size")
     parser.add_argument("--input-size", type=int, default=512, help="input size of image in pixels")
