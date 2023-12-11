@@ -1,11 +1,11 @@
 # data augmentation hyperparameters
 
 # HSV
-hue: 0.015  # Hue fraction
+hue: 0.015  # Hue fraction 0 ~ 1(0 ~ 360 degree)
 
-saturation: 0.7  # Saturation fraction
+saturation: 0.7  # Saturation fraction 0 ~ 1
 
-value: 0.4  # Value fraction
+value: 0.4  # Value fraction 0 ~ 1
 
 rotation: 0.0  # rotation degree
 
