@@ -2,7 +2,7 @@ import sys
 import os
 from pathlib import Path
 from Base.yolo import Model
-from Utils.utils import check_file
+from Utils.utils import check_file, parse_yaml
 import torch
 
 import argparse
@@ -37,6 +37,14 @@ def train(inputs, device):
     last = weights_dir/"last.pt"
     best = weights_dir/"best.pt"
 
+    # get the training hyperparameters
+    train_hyp = parse_yaml(inputs.hyp)
+
+    # get data augmentation hyper parameters
+    data_hyp = parse_yaml(inputs.data)
+
+    # create the yolo model
+    model = create_yolo_model()
 
     pass
 
@@ -89,5 +97,4 @@ if __name__ == "__main__":
     # initialize the software
     init()
 
-    # create the yolo model
-    model = create_yolo_model()
+    
