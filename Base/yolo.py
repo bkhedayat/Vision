@@ -1,8 +1,6 @@
 import sys
-import yaml
-import torch
 import torch.nn as nn
-from copy import deepcopy
+from ..Utils.utils import parse_yaml
 
 sys.path.append("./Base")
 
@@ -10,29 +8,38 @@ from backbone import ConvLayer, C3Layer, SPPF
 from neck import Concat
 from head import Detect
 
-class YamlParser:
-    # YamlParser parses yaml config file and create the model
-    def __init__ (self, file_name):
-        self.file_name = file_name
-        with open(self.file_name) as f:
-            # parse yaml file safely for untrusted input
-            self.model_dic = yaml.safe_load(f)
 
-    def parse_config(self, ch):
+class Model(nn.Module):
+    """
+    class model get yaml config file and parse it. Creates backbone, neck and head components and fuses them
+    ch_number is the number of channels of the input images
+    class_number defines how many classes model can detect
+    config is the path to model config yaml file
+    """ 
+    def __init__(self, config, ch_num=3, class_num=1):
+        super().__init__()
+        self.config = config
+        self.ch_num = ch_num
+        self.class_num = class_num
+
+    def parse_model(self):
+        """
+        get different components from the config.yaml and construct the model
+        """
         # get different components from the model dictionary
-        dic = deepcopy(self.model_dic)
+        mode_config = parse_yaml(self.config)
         
         # get number of classes
-        num_classes = dic["num_classes"]
+        num_classes = mode_config["num_classes"]
         print("Number of classes: {}".format(num_classes))
 
         # get the anchor boxes
-        anchors = dic['anchors']
+        anchors = mode_config['anchors']
         print("Anchor boxes: {}".format(anchors))
         
         print("Parsing backbone, neck and head data:")
         layers = []
-        for iter, (input_from, num_layers, layer_type, args) in enumerate(dic["backbone"] + dic["neck"] + dic["head"]):
+        for iter, (input_from, num_layers, layer_type, args) in enumerate(mode_config["backbone"] + mode_config["neck"] + mode_config["head"]):
             # create args list
             for indx,value in enumerate(args):
                 args[indx] = eval(value) if isinstance(value, str) else value
@@ -43,7 +50,7 @@ class YamlParser:
             # backbone and neck layers
             if layer_type in {ConvLayer, C3Layer, SPPF}:
                 # assign the size of input and output channels       
-                c_in, c_out = ch[input_from], args[0]
+                c_in, c_out = self.ch_num[input_from], args[0]
                 args = [c_in, c_out, *args[1:]]
                 
                 # C3 layers has more than 1 layer
@@ -52,11 +59,11 @@ class YamlParser:
             
             # neck Concat layer 
             elif layer_type is Concat:
-                c_out = sum(ch[layer] for layer in input_from) 
+                c_out = sum(self.ch_num[layer] for layer in input_from) 
 
             # head Detection layer
             elif layer_type is Detect:
-                args.append([ch[layer] for layer in input_from])    
+                args.append([self.ch_num[layer] for layer in input_from])    
 
             # create a sequential module of layers    
             module = nn.Sequential(*(layer_type(*args) for _ in range(num_layers))) if num_layers > 1 else layer_type(*args)
@@ -76,17 +83,3 @@ class YamlParser:
             print("layer{}: type:{} with num_param:{} added to Sequential.".format(module.index, module.layer_type, module.num_params))
 
         return nn.Sequential(*layers)
-
-                    
-                
-            
-
-
-class Model(nn.Module):
-    # class model get yaml config file and parse it. Creates backbone, neck and head components and fuses them
-    # ch_number is the number of channels of the input images
-    # class_number defines how many classes model can detect 
-    def __init__(self, config="config.yaml", ch_number=3, class_number=1):
-        super().__init__()
-        self.parser = YamlParser(config)
-        self.model = self.parser.parse_config([ch_number])
