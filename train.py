@@ -58,7 +58,7 @@ def init():
 
     # get the parameters from the inputs and check if they exist
     inputs.data, inputs.config, inputs.weights, inputs.hyp = \
-          check_file(inputs.data), check_file(inputs.config), str(inputs.weights), check_file(inputs.train-hyp)
+          check_file(inputs.data), check_file(inputs.config), str(inputs.weights), check_file(inputs.hyp)
     assert len(inputs.data), "init: ERROR: data.yaml is missing"
     assert len(inputs.config), "init: ERROR: config.yaml is missing"
     assert len(inputs.weights), "init: ERROR: model weights 'XXX.pt' is missing"
