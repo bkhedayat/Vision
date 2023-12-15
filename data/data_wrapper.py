@@ -1,4 +1,8 @@
+from pathlib import Path
 from ..Utils.utils import parse_yaml
+
+# create absolute ROOT path object of model
+ROOT = Path(__file__).resolve().parents[1]
 
 class DataWrapper():
     """
