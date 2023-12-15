@@ -1,24 +1,43 @@
 # data augmentation hyperparameters
 
-# HSV
-hue: 0.015  # Hue fraction 0 ~ 1(0 ~ 360 degree)
+# train data path
+train_dir: "dataset/train"
 
-saturation: 0.7  # Saturation fraction 0 ~ 1
+# validation data path
+valid_dir: "dataset/valid"
 
-value: 0.4  # Value fraction 0 ~ 1
+# test data path
+test_dir: "dataset/test"
 
-rotation: 0.0  # rotation degree
+# Hue fraction 0 ~ 1(0 ~ 360 degree)
+hue: 0.015  
 
-translate: 0.1  # translation fraction
+# Saturation fraction 0 ~ 1
+saturation: 0.7  
 
-scale: 0.5  # scale fraction
+# Value fraction 0 ~ 1
+value: 0.4  
 
-shear: 0.0  # shear degree
+# rotation degree
+rotation: 0.0  
 
-flip-v: 0.5  # flip probability: vertical
+# translation fraction
+translate: 0.1  
 
-flip-h: 0.0  # flip probability: horizontal
+# scale fraction
+scale: 0.5  
 
-mosaic: 1.0  # mosaic probability
+# shear degree
+shear: 0.0  
 
-mixup: 0.0  # mixup probability
+# flip probability: vertical
+flip-v: 0.5  
+
+# flip probability: horizontal
+flip-h: 0.0  
+
+# mosaic probability
+mosaic: 1.0  
+
+# mixup probability
+mixup: 0.0  
