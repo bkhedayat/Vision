@@ -1,4 +1,7 @@
-# data augmentation hyperparameters
+# data hyperparameters
+
+# classes
+class_names: ('human')
 
 # train data path
 train_dir: "dataset/train"
