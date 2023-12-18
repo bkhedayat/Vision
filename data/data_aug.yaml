@@ -1,7 +1,7 @@
 # data hyperparameters
 
 # classes
-class_names: ('human')
+class_names: ['human']
 
 # train data path
 train_dir: "dataset/train"
