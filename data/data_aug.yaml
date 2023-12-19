@@ -4,13 +4,13 @@
 class_names: ['human']
 
 # train data path
-train_dir: "dataset/train"
+train_dir: "data/dataset/train"
 
 # validation data path
-valid_dir: "dataset/valid"
+valid_dir: "data/dataset/valid"
 
 # test data path
-test_dir: "dataset/test"
+test_dir: "data/dataset/test"
 
 # Hue fraction 0 ~ 1(0 ~ 360 degree)
 hue: 0.015  
