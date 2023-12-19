@@ -16,6 +16,13 @@ class Data:
     def __init__(self, data_yaml):
         self.hyper = parse_yaml(data_yaml)
         self.class_names = self.hyper['class_names']
+        self.main_data_dir = str(ROOT/"data/dataset/main")
+
+    def prepare(self, train_split=80):
+        """
+        split the images into train/validation/test datasets
+        : param train_split: percentage of train data from all images
+        """
 
     def create_datasets(self, cls_num):
         """
