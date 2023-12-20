@@ -1,6 +1,6 @@
 from pathlib import Path
 import sys
-import os, shutil
+import os, shutil, random
 
 # create absolute ROOT path object of model
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,8 +22,8 @@ class Data:
 
     def prepare(self, dir):
         """
-        split the images into train/validation/test datasets
-        : param dir: path to train data directory
+        create a directory for train / val / test and their sub-directories
+        : param dir: path to directory
         """
 
         # check if the train/val/test dirs are available and delete them
@@ -34,7 +34,7 @@ class Data:
         os.mkdir(dir)
         os.mkdir(dir + "\\img")
         os.mkdir(dir + "\\label")
-
+        
 
     def create_datasets(self, cls_num):
         """
