@@ -17,8 +17,10 @@ class Data:
     def __init__(self, data_yaml):
         self.hyper = parse_yaml(data_yaml)
         self.class_names = self.hyper['class_names']
-        self.main_data_dir = str((ROOT/"data/dataset/main").resolve())
-
+        self.main_data_dir = str((ROOT/"data/dataset/main/").resolve())
+        self.images = []
+        self.annotations = []
+        self.train_split = 0.8
 
     def prepare(self, dir):
         """
@@ -50,7 +52,7 @@ class Data:
                 if isinstance(self.hyper[x], str):
                     # resolve the path and store the string
                     self.hyper[x] = str((ROOT/self.hyper[x]).resolve())
-                    print(self.hyper[x])
+
                     # prepare dir
                     self.prepare(self.hyper[x])
 
@@ -59,7 +61,33 @@ class Data:
                 # exit the program
                 sys.exit(1)
 
+        idxs = []
+        # get the images and annotations from main dataset
+        for root, dirs, files in os.walk(self.main_data_dir):
+            idx = 0
+            for file in files:
+                if file.endswith(".png"):
+                    # append the file to the list 
+                    self.images.append(file)
+
+                    # append the index to index list
+                    idxs.append(idx)
+                    idx += 1
+                else:
+                    self.annotations.append(file)
+                
+        # shuffle the index list
+        random.shuffle(idxs)
+        print(idxs)
         
+        # split the images and annotation based on the train split
+        for idx in range(int(len(idxs)*self.train_split)):
+            # copy the images and annotations in train dir"
+            img_path = self.main_data_dir + "/" + self.images[idxs[idx]]
+            annot_path = self.main_data_dir + "/" + self.annotations[idxs[idx]]
+            shutil.copy(img_path, str(ROOT/"data/dataset/train/img"))
+            shutil.copy(annot_path, str(ROOT/"data/dataset/train/label"))
+            print("create_datasets: LOG: img  label - {} copied!".format(idxs[idx]))              
 
         # return dataset dictionary   
         return self.hyper
