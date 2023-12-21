@@ -36,7 +36,30 @@ class Data:
         os.mkdir(dir)
         os.mkdir(dir + "\\img")
         os.mkdir(dir + "\\label")
-        
+    
+
+    def read_data(self):
+        """
+        reads the images and annotations from main dir and store them in lists
+        """
+        idxs = []
+        # get the images and annotations from main dataset
+        for root, dirs, files in os.walk(self.main_data_dir):
+            idx = 0
+            for file in files:
+                if file.endswith(".png"):
+                    # append the file to the list 
+                    self.images.append(file)
+
+                    # append the index to index list
+                    idxs.append(idx)
+                    idx += 1
+                else:
+                    self.annotations.append(file)
+
+        # shuffle the index list
+        random.shuffle(idxs)
+        return idxs  
 
     def create_datasets(self, cls_num):
         """
@@ -61,24 +84,9 @@ class Data:
                 # exit the program
                 sys.exit(1)
 
-        idxs = []
-        # get the images and annotations from main dataset
-        for root, dirs, files in os.walk(self.main_data_dir):
-            idx = 0
-            for file in files:
-                if file.endswith(".png"):
-                    # append the file to the list 
-                    self.images.append(file)
-
-                    # append the index to index list
-                    idxs.append(idx)
-                    idx += 1
-                else:
-                    self.annotations.append(file)
-                
-        # shuffle the index list
-        random.shuffle(idxs)
-        print(idxs)
+        
+        # get list of dataset indexs
+        idxs = self.read_data()
         
         # split the images and annotation based on the train split
         for idx in range(int(len(idxs)*self.train_split)):
