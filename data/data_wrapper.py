@@ -1,12 +1,5 @@
-from pathlib import Path
-import sys
-import os, shutil, random
+from torch.utils.data import Dataset
 
-# create absolute ROOT path object of model
-ROOT = Path(__file__).resolve().parents[1]
-
-# add ROOT to sys path
-sys.path.append(str(ROOT))
 
 from Utils.utils import parse_yaml
 
@@ -21,21 +14,6 @@ class Data:
         self.images = []
         self.annotations = []
         self.split_ratio = split_ratio
-
-    def prepare(self, dir):
-        """
-        create a directory for train / val / test and their sub-directories
-        : param dir: path to directory
-        """
-
-        # check if the train/val/test dirs are available and delete them
-        if os.path.exists(dir):
-            shutil.rmtree(dir)
-            
-        # create new sub dirs for images and labels
-        os.mkdir(dir)
-        os.mkdir(dir + "\\img")
-        os.mkdir(dir + "\\label")
     
 
     def read_data(self):
