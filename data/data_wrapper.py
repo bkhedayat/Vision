@@ -15,30 +15,6 @@ class Data:
         self.annotations = []
         self.split_ratio = split_ratio
     
-
-    def read_data(self):
-        """
-        reads the images and annotations from main dir and store them in lists
-        """
-        idxs = []
-        # get the images and annotations from main dataset
-        for root, dirs, files in os.walk(self.main_data_dir):
-            idx = 0
-            for file in files:
-                if file.endswith(".png"):
-                    # append the file to the list 
-                    self.images.append(file)
-
-                    # append the index to index list
-                    idxs.append(idx)
-                    idx += 1
-                else:
-                    self.annotations.append(file)
-
-        # shuffle the index list
-        random.shuffle(idxs)
-        return idxs  
-    
     def split_data(self, index_list):
         """
         split data using the split ratio and copy img + annot to 

@@ -16,10 +16,37 @@ def prepare_paths(dir):
     """
 
     # check if the train/val/test dirs are available and delete them
-    if os.path.exists(dir):
-        shutil.rmtree(dir)
+    if os.path.exists(str(dir)):
+        shutil.rmtree(str(dir))
             
     # create new sub dirs for images and labels
     os.mkdir(str(dir))
     os.mkdir(str(dir/"img"))
     os.mkdir(str(dir/"label"))
+
+def read_main_data(main_dir):
+    """
+    reads the images and annotations from main dir
+    returns index, image and annotation lists
+    : param main_dir is the path to the main data directory
+    """
+    idxs = []
+    images = []
+    annotations = []
+    # get the images and annotations from main dataset
+    for root, dirs, files in os.walk(main_dir):
+        idx = 0
+        for file in files:
+            if file.endswith(".png"):
+                # append the file to the list 
+                images.append(file)
+
+                # append the index to index list
+                idxs.append(idx)
+                idx += 1
+            else:
+                annotations.append(file)
+
+    # shuffle the index list
+    random.shuffle(idxs)
+    return idxs, images, annotations
