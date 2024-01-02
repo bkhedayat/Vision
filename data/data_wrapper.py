@@ -1,7 +1,15 @@
 from torch.utils.data import Dataset
-
-
+from data_utils import read_main_data, prepare_paths
 from Utils.utils import parse_yaml
+
+import sys
+from pathlib import Path
+
+# create absolute ROOT path object of model
+ROOT = Path(__file__).resolve().parents[1]
+
+# add ROOT to sys path
+sys.path.append(str(ROOT))
 
 class Data:
     """
@@ -53,7 +61,14 @@ class Data:
 
     def create_datasets(self, cls_num):
         """
-        Creates train, valid and test sets
+        Creates train, valid and test sets.
+
+        Args:
+            cls_num (int): number of classes to detect
+
+        Returns:
+            train, valid, test datasets (list)
+
         """
 
         # check the class number with len of class names
@@ -66,8 +81,8 @@ class Data:
                     # resolve the path and store the string
                     self.hyper[x] = str((ROOT/self.hyper[x]).resolve())
 
-                    # prepare dir
-                    self.prepare(self.hyper[x])
+                    # prepare sub directores for the given path
+                    prepare_paths(self.hyper[x])
 
             else:
                 print("create_datasets: ERROR: {} doest not exist in yaml!".format(x))
@@ -75,8 +90,8 @@ class Data:
                 sys.exit(1)
 
         
-        # get list of dataset indexs
-        idxs = self.read_data()
+        # get list of dataset indexs, images and annotations
+        idxs, image_list, annot_list = read_main_data()
         
         # copy the train / valid / test data in corresponding dir
         self.split_data(idxs)          
@@ -85,6 +100,6 @@ class Data:
         return self.hyper
 
 if __name__ == "__main__":
-    hyper = str(ROOT/"data/data_aug.yaml")
+    #hyper = str(ROOT/"data/data_aug.yaml")
     data = Data(hyper, 0.8)
     data.create_datasets(1)
