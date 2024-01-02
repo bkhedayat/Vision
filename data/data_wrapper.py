@@ -1,5 +1,5 @@
 from torch.utils.data import Dataset
-from data_utils import read_main_data, prepare_paths
+from data_utils import read_main_data, prepare_paths, copy_data
 from Utils.utils import parse_yaml
 
 import sys
@@ -19,15 +19,19 @@ class Data:
         self.hyper = parse_yaml(data_yaml)
         self.class_names = self.hyper['class_names']
         self.main_data_dir = str((ROOT/"data/dataset/main/").resolve())
-        self.images = []
-        self.annotations = []
         self.split_ratio = split_ratio
     
-    def split_data(self, index_list):
+    def split_data(self, index_list, image_list, annot_list):
         """
-        split data using the split ratio and copy img + annot to 
-        correspondig directories
-        : param index_list: list of shuffled indexes of all data
+        Split data using the split ratio and copy img + annot to directories
+        
+        Args:
+            index_list (list): shuffeld index of images
+            image_list (list): list of images
+            annot_list (list): list of annotations
+        
+        Returns:
+
         """
         # calculcate number of index for tarin data
         num_train_data = int(len(index_list)*self.split_ratio)
@@ -35,29 +39,26 @@ class Data:
         # calculate number of index for valid data
         num_valid_data = int(len(index_list)*(1-self.split_ratio)/2)
 
+        # define copy directory
+        copy_dir = str(ROOT/"data/dataset")
+
         # split the images and annotation based on the train split
         for num, idx in enumerate(index_list):
             # create the absolute path for image and annotation files
-            img_path = self.main_data_dir + "/" + self.images[idx]
-            annot_path = self.main_data_dir + "/" + self.annotations[idx]
+            img_path = self.main_data_dir + "/" + image_list[idx]
+            annot_path = self.main_data_dir + "/" + annot_list[idx]
             
             # copy the files
             if num < num_train_data:
                 # train dir"
-                shutil.copy(img_path, str(ROOT/"data/dataset/train/img"))
-                shutil.copy(annot_path, str(ROOT/"data/dataset/train/label"))
-                print("create_datasets: LOG: train data index {} added!".format(idx))
+                copy_data(img_path, annot_path, copy_dir, "train")
             elif num >= num_train_data and num <= (num_train_data + num_valid_data):
                 # valid dir"
-                shutil.copy(img_path, str(ROOT/"data/dataset/valid/img"))
-                shutil.copy(annot_path, str(ROOT/"data/dataset/valid/label"))
-                print("create_datasets: LOG: valid data index {} added!".format(idx))
+                copy_data(img_path, annot_path, copy_dir, "valid")
             else:
                 # test dir
-                # train dir"
-                shutil.copy(img_path, str(ROOT/"data/dataset/test/img"))
-                shutil.copy(annot_path, str(ROOT/"data/dataset/test/label"))
-                print("create_datasets: LOG: test data index {} added!".format(idx))
+                copy_data(img_path, annot_path, copy_dir, "test")
+
 
     def create_datasets(self, cls_num):
         """
@@ -98,8 +99,3 @@ class Data:
 
         # return dataset dictionary   
         return self.hyper
-
-if __name__ == "__main__":
-    #hyper = str(ROOT/"data/data_aug.yaml")
-    data = Data(hyper, 0.8)
-    data.create_datasets(1)
