@@ -1,12 +1,4 @@
-import sys
 import os, shutil, random
-from pathlib import Path
-
-# create absolute ROOT path object of model
-ROOT = Path(__file__).resolve().parents[1]
-
-# add ROOT to sys path
-sys.path.append(str(ROOT))
 
 def prepare_paths(dir):
     """ 
@@ -50,3 +42,26 @@ def read_main_data(main_dir):
     # shuffle the index list
     random.shuffle(idxs)
     return idxs, images, annotations
+
+def copy_data(img_path, annot_path, copy_dir, data_type):
+    """
+    Copy image and annotation to specified directories
+
+    Args:
+        img_path (str): absolute image path
+        annot_path (str): absolute annotation path
+        copy_dir (str): directory to copy image and annotations
+        data_type (str): type of image data that is copied
+    
+    Returns:
+
+    """
+    # define directories
+    img_dir = copy_dir + "/" + data_type + "/img"
+    annot_dir = copy_dir + "/" + data_type + "/label"
+
+    # copy files to directories
+    shutil.copy(img_path, img_dir)
+    shutil.copy(annot_path, annot_dir)
+    
+    print("copy_data: LOG: {} data added!".format(data_type))
