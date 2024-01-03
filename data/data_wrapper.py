@@ -106,3 +106,32 @@ class Data:
 
         # return dataset dictionary   
         return self.hyper
+
+class CustomDataset(Dataset):
+    """
+    A Map-style custom dataset loader
+
+    Augs:
+        data_tensor (tuple): contains 3 tensor of image, annotations and bbox coordinates
+    """
+    def __init__(self, data_tesnor):
+        super().__init__()
+        self.data_tensor = data_tesnor
+
+    def __getitem__(self, index):
+        """
+        Returns the data and annotations at the given index
+
+        Args:
+            index (int): desired index
+        """
+        return super().__getitem__(index)
+    
+    def __len__(self):
+        """
+        Returns the length of the dataset
+
+        Returns:
+            int: number of samples in dataset
+        """
+        return len(self.data_tensor[0])
