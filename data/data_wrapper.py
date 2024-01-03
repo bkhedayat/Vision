@@ -125,7 +125,7 @@ class CustomDataset(Dataset):
         Args:
             index (int): desired index
         """
-        return super().__getitem__(index)
+        pass
     
     def __len__(self):
         """
