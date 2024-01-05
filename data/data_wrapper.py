@@ -59,16 +59,15 @@ class CustomDataset(Dataset):
 
         return image, label
 
-class Data:
+
+class DatasetHelper:
     """
-    Data class creates train/valid/test datasets from data_aug.yaml
+    DatasetHelper prepares the main dataset and directories
+    required for training and testing using data_aug.yaml
 
     Args:
         data_yaml (str): path to data_aug.yaml
         split_ratio (float): train-valid-test split ratio
-
-    Returns:
-        train / valid / test atasets
     """
     def __init__(self, data_yaml, split_ratio=0.8):
         self.hyper = parse_yaml(data_yaml)
