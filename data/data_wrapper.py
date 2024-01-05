@@ -1,4 +1,6 @@
 from torch.utils.data import Dataset
+import cv2 as cv
+
 from data_utils import read_main_data, prepare_paths, copy_data
 from Utils.utils import parse_yaml
 
