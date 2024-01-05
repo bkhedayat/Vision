@@ -13,6 +13,52 @@ ROOT = Path(__file__).resolve().parents[1]
 # add ROOT to sys path
 sys.path.append(str(ROOT))
 
+class CustomDataset(Dataset):
+    """
+    A Map-style custom dataset
+
+    Augs:
+        image_paths (list): list of image paths
+        label_paths (list): list of label paths
+        transform (obj): data augmentation pipeline
+    """
+    def __init__(self, image_paths, label_paths, transform=False):
+        super().__init__()
+        self.image_paths = image_paths
+        self.label_paths = label_paths
+
+    def __len__(self):
+        """
+        Returns the length of the dataset
+
+        Returns:
+            int: number of samples in dataset
+        """
+        return len(self.image_paths)
+
+    def __getitem__(self, index):
+        """
+        Returns the image and annotation at the given index
+
+        Args:
+            index (int): desired index
+        """
+        # get the image path & label  
+        image_path = self.image_paths[index]
+        label = self.label_paths[index]
+
+        # read the image
+        image = cv.imread(image_path)
+
+        # change the channel format BGR to RGB
+        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+
+        # transform the image using augmentation pipline
+        if self.transfrom is not None:
+            image = self.transform(image=image)["image"]
+
+        return image, label
+
 class Data:
     """
     Data class creates train/valid/test datasets from data_aug.yaml
@@ -108,32 +154,3 @@ class Data:
 
         # return dataset dictionary   
         return self.hyper
-
-class CustomDataset(Dataset):
-    """
-    A Map-style custom dataset loader
-
-    Augs:
-        data_tensor (tuple): contains 3 tensor of image, annotations and bbox coordinates
-    """
-    def __init__(self, data_tesnor):
-        super().__init__()
-        self.data_tensor = data_tesnor
-
-    def __getitem__(self, index):
-        """
-        Returns the data and annotations at the given index
-
-        Args:
-            index (int): desired index
-        """
-        pass
-    
-    def __len__(self):
-        """
-        Returns the length of the dataset
-
-        Returns:
-            int: number of samples in dataset
-        """
-        return len(self.data_tensor[0])
