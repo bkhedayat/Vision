@@ -75,14 +75,13 @@ class DatasetHelper:
         self.main_data_dir = str((ROOT/"data/dataset/main/").resolve())
         self.split_ratio = split_ratio
     
-    def split_data(self, index_list, image_list, annot_list):
+    def split_data(self, image_list, label_list):
         """
         Split data using the split ratio and copy img + annot to directories
         
         Args:
-            index_list (list): shuffeld index of images
             image_list (list): list of images
-            annot_list (list): list of annotations
+            label_list (list): list of labels
         
         Returns:
 
@@ -113,6 +112,29 @@ class DatasetHelper:
                 # test dir
                 copy_data(img_path, annot_path, copy_dir, "test")
 
+    def read_main_data(self, main_dir):
+        """
+        Reads the images and labels from main data directory
+    
+        Args:
+            main_dir(str): path of the main data directory
+    
+        Returns: 
+            images(list): list of images
+            labels(list): list of labels
+        """
+        images = []
+        labels = []
+        # get the images and labels from main dataset
+        for root, dirs, files in os.walk(main_dir):
+            for file in files:
+                if file.endswith(".png"):
+                    # append the file to the list 
+                    images.append(file)
+                else:
+                    labels.append(file)
+
+        return images, labels
 
     def create_datasets(self, cls_num):
         """
@@ -146,10 +168,10 @@ class DatasetHelper:
 
         
         # get list of dataset indexs, images and annotations
-        idxs, image_list, annot_list = read_main_data()
+        image_list, label_list = self.read_main_data(self.main_data_dir)
         
         # copy the train / valid / test data in corresponding dir
-        self.split_data(idxs)          
+        self.split_data(image_list, label_list)          
 
         # return dataset dictionary   
         return self.hyper
