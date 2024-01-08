@@ -87,7 +87,7 @@ class DatasetHelper:
 
         """
         # calculcate number of index for tarin data
-        num_train_data = int(len(index_list)*self.split_ratio)
+        num_train_data = int(len(image_list)*self.split_ratio)
 
         # calculate number of index for valid data
         num_valid_data = int(len(index_list)*(1-self.split_ratio)/2)
@@ -99,7 +99,7 @@ class DatasetHelper:
         for num, idx in enumerate(index_list):
             # create the absolute path for image and annotation files
             img_path = self.main_data_dir + "/" + image_list[idx]
-            annot_path = self.main_data_dir + "/" + annot_list[idx]
+            annot_path = self.main_data_dir + "/" + label_list[idx]
             
             # copy the files
             if num < num_train_data:
@@ -129,10 +129,13 @@ class DatasetHelper:
         for root, dirs, files in os.walk(main_dir):
             for file in files:
                 if file.endswith(".png"):
-                    # append the file to the list 
-                    images.append(file)
+                    # create an image path and append it to the list 
+                    img_path = self.main_data_dir + "/" + file
+                    images.append(img_path)
                 else:
-                    labels.append(file)
+                    # create a label path and append it to the list
+                    label_path = self.main_data_dir + "/" + file
+                    labels.append(label_path)
 
         return images, labels
 
