@@ -5,6 +5,7 @@ from data_utils import read_main_data, prepare_paths, copy_data
 from Utils.utils import parse_yaml
 
 import sys
+import os
 from pathlib import Path
 
 # create absolute ROOT path object of model
@@ -77,66 +78,6 @@ class DatasetHelper:
         self.class_names = self.hyper['class_names']
         self.main_data_dir = str((ROOT/"data/dataset/main/").resolve())
         self.split_ratio = split_ratio
-    
-    def split_data(self, image_list, label_list):
-        """
-        Split data using the split ratio and copy img + annot to directories
-        
-        Args:
-            image_list (list): list of images
-            label_list (list): list of labels
-        
-        Returns:
-
-        """
-        # calculcate number of index for tarin data
-        num_train_data = int(len(image_list)*self.split_ratio)
-
-        # calculate number of index for valid data
-        num_valid_data = int(len(index_list)*(1-self.split_ratio)/2)
-
-        # define copy directory
-        copy_dir = str(ROOT/"data/dataset")
-
-        # split the images and annotation based on the train split
-        for num, idx in enumerate(index_list):
-            # copy the files
-            if num < num_train_data:
-                # train dir"
-                copy_data(img_path, annot_path, copy_dir, "train")
-            elif num >= num_train_data and num <= (num_train_data + num_valid_data):
-                # valid dir"
-                copy_data(img_path, annot_path, copy_dir, "valid")
-            else:
-                # test dir
-                copy_data(img_path, annot_path, copy_dir, "test")
-
-    def read_main_data(self, main_dir):
-        """
-        Reads the images and labels from main data directory
-    
-        Args:
-            main_dir(str): path of the main data directory
-    
-        Returns: 
-            images(list): list of images
-            labels(list): list of labels
-        """
-        images = []
-        labels = []
-        # get the images and labels from main dataset
-        for root, dirs, files in os.walk(main_dir):
-            for file in files:
-                if file.endswith(".png"):
-                    # create an image path and append it to the list 
-                    img_path = self.main_data_dir + "/" + file
-                    images.append(img_path)
-                else:
-                    # create a label path and append it to the list
-                    label_path = self.main_data_dir + "/" + file
-                    labels.append(label_path)
-
-        return images, labels
 
     def create_datasets(self, cls_num):
         """
@@ -177,3 +118,78 @@ class DatasetHelper:
 
         # return dataset dictionary   
         return self.hyper
+    
+    def split_data(self, image_list, label_list):
+        """
+        Split data using the split ratio and copy img + annot to directories
+        
+        Args:
+            image_list (list): list of images
+            label_list (list): list of labels
+        
+        Returns:
+            (dict): dictionary of train, valid and test datasets
+        """
+        # calculcate number of index for tarin data
+        num_train_data = int(len(image_list)*self.split_ratio)
+
+        # calculate number of index for valid data
+        num_valid_data = int(len(image_list)*(1-self.split_ratio)/2)
+
+        # define copy directory
+        copy_dir = str(ROOT/"data/dataset")
+
+        train_data = {}
+        valid_data = {}
+        test_data = {}
+
+        # split the images and annotation based on the train split
+        for idx, _ in enumerate(image_list):
+            # copy the files
+            if idx < num_train_data:
+                # train dataset"
+                dataset_type = "train"
+                train_data[image_list[idx]] = label_list[idx]
+            elif idx >= num_train_data and idx <= (num_train_data + num_valid_data):
+                # validation dataset"
+                dataset_type = "valid"
+                valid_data[image_list[idx]] = label_list[idx]
+            else:
+                # test dataset
+                dataset_type = "test"
+                test_data[image_list[idx]] = label_list[idx]
+
+            # copy the files into the specified directores
+            copy_data(image_list[idx], label_list[idx], copy_dir, dataset_type)
+
+        return {"train" : train_data, "valid" : valid_data, "test" : test_data}
+        
+
+        
+
+    def read_main_data(self, main_dir):
+        """
+        Reads the images and labels from main data directory
+    
+        Args:
+            main_dir(str): path of the main data directory
+    
+        Returns: 
+            images(list): list of images
+            labels(list): list of labels
+        """
+        images = []
+        labels = []
+        # get the images and labels from main dataset
+        for root, dirs, files in os.walk(main_dir):
+            for file in files:
+                if file.endswith(".png"):
+                    # create an image path and append it to the list 
+                    img_path = self.main_data_dir + "/" + file
+                    images.append(img_path)
+                else:
+                    # create a label path and append it to the list
+                    label_path = self.main_data_dir + "/" + file
+                    labels.append(label_path)
+
+        return images, labels
