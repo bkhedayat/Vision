@@ -38,10 +38,13 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, index):
         """
-        Returns the image and annotation at the given index
+        Returns the set of image and label at the given index
 
         Args:
             index (int): desired index
+
+        Returns:
+            (set): image and label
         """
         # get the image path & label  
         image_path = self.image_paths[index]
@@ -57,7 +60,7 @@ class CustomDataset(Dataset):
         if self.transfrom is not None:
             image = self.transform(image=image)["image"]
 
-        return image, label
+        return (image, label)
 
 
 class DatasetHelper:
@@ -97,10 +100,6 @@ class DatasetHelper:
 
         # split the images and annotation based on the train split
         for num, idx in enumerate(index_list):
-            # create the absolute path for image and annotation files
-            img_path = self.main_data_dir + "/" + image_list[idx]
-            annot_path = self.main_data_dir + "/" + label_list[idx]
-            
             # copy the files
             if num < num_train_data:
                 # train dir"
