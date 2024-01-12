@@ -114,10 +114,10 @@ class DatasetHelper:
         image_list, label_list = self.read_main_data(self.main_data_dir)
         
         # copy the train / valid / test data in corresponding dir
-        self.split_data(image_list, label_list)          
+        data_dict = self.split_data(image_list, label_list)          
 
         # return dataset dictionary   
-        return self.hyper
+        return data_dict
     
     def split_data(self, image_list, label_list):
         """
@@ -139,6 +139,7 @@ class DatasetHelper:
         # define copy directory
         copy_dir = str(ROOT/"data/dataset")
 
+        # { image_1: label_1, image_2: label_2, ...}
         train_data = {}
         valid_data = {}
         test_data = {}
