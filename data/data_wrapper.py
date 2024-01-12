@@ -45,7 +45,7 @@ class CustomDataset(Dataset):
             index (int): desired index
 
         Returns:
-            (set): image and label
+            (list): image and label
         """
         # read the image
         image = cv.imread(self.image_paths[index])
