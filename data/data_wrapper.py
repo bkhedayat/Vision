@@ -139,10 +139,13 @@ class DatasetHelper:
         # define copy directory
         copy_dir = str(ROOT/"data/dataset")
 
-        # { image_1: label_1, image_2: label_2, ...}
-        train_data = {}
-        valid_data = {}
-        test_data = {}
+        # define the train / valid / test lists
+        train_image = []
+        train_label = []
+        valid_image = []
+        valid_label = []
+        test_image = []
+        test_label = []
 
         # split the images and annotation based on the train split
         for idx, _ in enumerate(image_list):
@@ -150,20 +153,23 @@ class DatasetHelper:
             if idx < num_train_data:
                 # train dataset"
                 dataset_type = "train"
-                train_data[image_list[idx]] = label_list[idx]
+                train_image.append(image_list[idx])
+                train_label.append(label_list[idx])
             elif idx >= num_train_data and idx <= (num_train_data + num_valid_data):
                 # validation dataset"
                 dataset_type = "valid"
-                valid_data[image_list[idx]] = label_list[idx]
+                valid_image.append(image_list[idx])
+                valid_label.append(label_list[idx])
             else:
                 # test dataset
                 dataset_type = "test"
-                test_data[image_list[idx]] = label_list[idx]
+                test_image.append(image_list[idx])
+                test_label.append(label_list[idx])
 
             # copy the files into the specified directores
             copy_data(image_list[idx], label_list[idx], copy_dir, dataset_type)
 
-        return {"train" : train_data, "valid" : valid_data, "test" : test_data}
+        return {"train" : [train_image, train_label], "valid" : [valid_image, valid_label], "test" : [test_image, test_label]}
         
 
         
