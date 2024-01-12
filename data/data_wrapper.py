@@ -47,21 +47,21 @@ class CustomDataset(Dataset):
         Returns:
             (set): image and label
         """
-        # get the image path & label  
-        image_path = self.image_paths[index]
-        label = self.label_paths[index]
-
         # read the image
-        image = cv.imread(image_path)
+        image = cv.imread(self.image_paths[index])
 
         # change the channel format BGR to RGB
         image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+
+        label = []
+        f = open(self.label_paths[index], "r")
+        label = f.readline().split(" ")
 
         # transform the image using augmentation pipline
         if self.transfrom is not None:
             image = self.transform(image=image)["image"]
 
-        return (image, label)
+        return [image, label]
 
 
 class DatasetHelper:
