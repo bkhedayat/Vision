@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 from Base.yolo import Model
 from Utils.utils import check_file, parse_yaml
+from data.data_wrapper import DatasetHelper, CustomDataset
 import torch
 
 import argparse
@@ -23,7 +24,13 @@ ROOT = Path(os.path.relpath(ROOT, Path.cwd()))
 
 def train(inputs, device):
     """
-    trains the model 
+    Starts model's training using input arguments.
+
+    Args:
+        input(obj): argparser object containing input arguments
+
+    Returns:
+
     """
     # define output dir and create it
     output = ROOT/"output"
@@ -45,6 +52,12 @@ def train(inputs, device):
 
     # create the yolo model
     model = create_yolo_model()
+
+    # create the data helper object to prepare datasets
+    data_helper = DatasetHelper(inputs.data)
+
+    # get data dictionary from data_helper
+    data_dict = DatasetHelper.create_datasets(cls_num=1)
 
     pass
 
