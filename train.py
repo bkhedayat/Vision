@@ -47,9 +47,6 @@ def train(inputs, device):
     # get the training hyperparameters
     train_hyp = parse_yaml(inputs.hyp)
 
-    # get data augmentation hyper parameters
-    data_hyp = parse_yaml(inputs.data)
-
     # create the yolo model
     model = create_yolo_model()
 
@@ -59,6 +56,10 @@ def train(inputs, device):
     # get data dictionary from data_helper
     data_dict = DatasetHelper.create_datasets(cls_num=1)
 
+    # create dataloader from generated datasets
+    train_dataloader, valid_dataloader, test_dataloader = data_helper(data_dict)
+
+    # train model
     pass
 
 def init():
