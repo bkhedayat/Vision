@@ -57,7 +57,7 @@ def train(inputs, device):
     data_dict = DatasetHelper.create_datasets(cls_num=1)
 
     # create dataloader from generated datasets
-    train_dataloader, valid_dataloader, test_dataloader = data_helper(data_dict)
+    train_dataloader, valid_dataloader, test_dataloader = data_helper.create_dataloaders(data_dict=data_dict)
 
     # train model
     pass
