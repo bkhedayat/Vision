@@ -1,4 +1,4 @@
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import cv2 as cv
 
 from data_utils import read_main_data, prepare_paths, copy_data
@@ -118,6 +118,33 @@ class DatasetHelper:
 
         # return dataset dictionary   
         return data_dict
+    
+    def create_dataloaders(self, data_dict):
+        """
+        Creates Dataset objects from data_dict lists.
+        
+        Args:
+            data_dict(dictionary): contains all the train / valid / test image & label lists
+
+        Returns:
+            train_loader, valid_loader, test_loader(Dataloader): dataloader objects of the dataset
+        """
+        # create Dataset objects
+        train_list = data_dict["train"]
+        valid_list = data_dict["valid"]
+        test_list = data_dict["test"]
+
+        train_dataset = CustomDataset(image_paths=train_list[0], label_paths=train_list[1])
+        valid_dataset = CustomDataset(image_paths=valid_list[0], label_paths=valid_list[1])
+        test_dataset = CustomDataset(image_paths=test_list[0], label_paths=test_list[1])
+
+        # create dataloaders
+        train_loader = DataLoader(train_dataset, batch_size=8, drop_last=True, shuffle=True)
+        valid_loader = DataLoader(valid_dataset, batch_size=8, drop_last=True, shuffle=True)
+        test_loader = DataLoader(test_dataset, batch_size=1)
+
+        return train_loader, valid_loader, test_loader
+
     
     def split_data(self, image_list, label_list):
         """
