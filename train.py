@@ -62,6 +62,25 @@ def train(inputs, device):
     # train model
     pass
 
+def prepare_data(data_yaml, cls_num=1):
+    """
+    Prepares datasets for training and validataion
+
+    Args:
+        data_yaml(str): path to the data_yaml file
+
+    Returns:
+        data loaders(obj): train, valid, test dataloaders
+    """
+    # create the data helper object to prepare datasets
+    data_helper = DatasetHelper(data_yaml)
+
+    # get data dictionary from data_helper
+    data_dict = DatasetHelper.create_datasets(cls_num)
+
+    # create dataloader from generated datasets
+    return data_helper.create_dataloaders(data_dict=data_dict)
+
 def init():
     # log intro
     sw_version = 0.1
