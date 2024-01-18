@@ -51,6 +51,9 @@ def train(inputs, device):
     # create the yolo model
     model = create_yolo_model()
 
+    # layers to be frozen
+    frozen_layers = [f"model.{layer}" for layer in (inputs.freeze if len(inputs.freeze) > 1 else range(inputs.freeze[0]))]
+
     # prepare datasets create dataloader from generated datasets
     train_dataloader, valid_dataloader, test_dataloader = prepare_data(inputs.data)
 
