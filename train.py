@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 from pathlib import Path
 from Base.yolo import Model
 from Utils.utils import check_file, parse_yaml
@@ -50,16 +51,26 @@ def train(inputs, device):
     # create the yolo model
     model = create_yolo_model()
 
-    # create the data helper object to prepare datasets
-    data_helper = DatasetHelper(inputs.data)
+    # prepare datasets create dataloader from generated datasets
+    train_dataloader, valid_dataloader, test_dataloader = prepare_data(inputs.data)
 
-    # get data dictionary from data_helper
-    data_dict = DatasetHelper.create_datasets(cls_num=1)
+    # load model on device and get the model parameters
+    model.to(device)
+    model_params = list(param for param in model.parameters() if param.requires_grad)
 
-    # create dataloader from generated datasets
-    train_dataloader, valid_dataloader, test_dataloader = data_helper.create_dataloaders(data_dict=data_dict)
+    # define optimzer
+    torch.optim.SGD(model_params, lr=0.005, momentum=0.9, weight_decay=0.0005)
 
     # train model
+    epochs = 10
+    for epoch in range(epochs):
+        start = time.time()
+        model.train()
+
+        for images, labels in train_dataloader:
+            images = list(image.to(device) for image in images)
+            labels = list(item.float().to(device) for item in labels)
+
     pass
 
 def prepare_data(data_yaml, cls_num=1):
@@ -113,6 +124,7 @@ def parse_args():
     parser.add_argument("--epochs", type=int, default=100, help="number of trainning iterations")
     parser.add_argument("--batch-size", type=int, default=8, help="input batch size")
     parser.add_argument("--input-size", type=int, default=512, help="input size of image in pixels")
+    parser.add_argument("--freeze", nargs="+", type=int, default=[0], help="freeze layers: [5] or [1, 2, 3, 4, 5]")
     return parser.parse_args()
 
 def create_yolo_model():
