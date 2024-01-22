@@ -24,3 +24,16 @@ def parse_yaml(path):
     # make a deep copy of the parsed yaml file
     loaded = deepcopy(loaded)
     return loaded
+
+def Check_input_size(img_input_size):
+    """
+    Checks whether the input size is divisable to 32
+
+    Args:
+        img_input_size(int): the input size of the image
+
+    Returns:
+        (bool)
+    """
+    reminder = int(img_input_size) % 32 
+    return True if reminder == 0 else False
