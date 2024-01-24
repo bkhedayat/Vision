@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+from tqdm import tqdm
 from pathlib import Path
 from Base.yolo import Model
 from Utils.utils import check_file, parse_yaml, Check_input_size
@@ -69,15 +70,24 @@ def train(inputs, device):
 
     # train model
     epochs = 10
+    batches = len(train_dataloader)     # number of batches 
+    start = time.time()
     for epoch in range(epochs):
-        start = time.time()
+        
         model.train()
+        progress_bar = enumerate(train_dataloader)
+        progress_bar = tqdm(progress_bar, total=batches)
+        for idx, images, labels in progress_bar:
+            # normalize the image with type float32
+            images = images.to(device).float() / 255
 
-        for images, labels in train_dataloader:
-            images = list(image.to(device) for image in images)
+            # use autocast to optimze the training
+            with torch.cuda.amp.autocast(True):
+                prediction = model(images)
+
             labels = list(item.float().to(device) for item in labels)
 
-    pass
+    end = time.time()
 
 def prepare_data(data_yaml, cls_num=1):
     """
