@@ -4,7 +4,7 @@ import time
 from tqdm import tqdm
 from pathlib import Path
 from Base.yolo import Model
-from Utils.utils import check_file, parse_yaml, Check_input_size
+from Utils.utils import check_file, parse_yaml
 from data.data_wrapper import DatasetHelper, CustomDataset
 import torch
 
@@ -49,9 +49,6 @@ def train(inputs, device):
     # get the training hyperparameters
     train_hyp = parse_yaml(inputs.hyp)
 
-    # chcek the input size
-    assert Check_input_size(inputs.input_size), "train: ERROR: the input size is not divisable by 32!"
-
     # create the yolo model
     model = create_yolo_model()
 
@@ -83,9 +80,11 @@ def train(inputs, device):
 
             # use autocast to optimze the training
             with torch.cuda.amp.autocast(True):
+                # predict 
                 prediction = model(images)
 
-            labels = list(item.float().to(device) for item in labels)
+                # calcualte loss
+                loss = compute_loss(prediction, labels.to(device))
 
     end = time.time()
 
