@@ -63,28 +63,37 @@ def train(inputs, device):
     model_params = list(param for param in model.parameters() if param.requires_grad)
 
     # define optimzer
-    torch.optim.SGD(model_params, lr=0.005, momentum=0.9, weight_decay=0.0005)
+    optimizer = torch.optim.SGD(model_params, lr=0.005, momentum=0.9, weight_decay=0.0005)
 
     # train model
     epochs = 10
     batches = len(train_dataloader)     # number of batches 
     start = time.time()
+    
+    # grad scaler
+    g_scaler = torch.cuda.amp.GradScaler(True)
     for epoch in range(epochs):
         
         model.train()
         progress_bar = enumerate(train_dataloader)
         progress_bar = tqdm(progress_bar, total=batches)
+        optimizer.zero_grad()
         for idx, images, labels in progress_bar:
             # normalize the image with type float32
             images = images.to(device).float() / 255
 
-            # use autocast to optimze the training
+            # Forward
             with torch.cuda.amp.autocast(True):
                 # predict 
                 prediction = model(images)
 
                 # calcualte loss
                 loss = compute_loss(prediction, labels.to(device))
+
+        # Backward
+        g_scaler.scale(loss).backward()    
+        g_scaler.step(optimizer)
+        g_scaler.update
 
     end = time.time()
 
