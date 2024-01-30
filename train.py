@@ -93,7 +93,7 @@ def train(inputs, device):
         # Backward
         g_scaler.scale(loss).backward()    
         g_scaler.step(optimizer)
-        g_scaler.update
+        g_scaler.update()
 
     end = time.time()
 
