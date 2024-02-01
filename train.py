@@ -7,7 +7,7 @@ from Base.yolo import Model
 from Utils.utils import check_file, parse_yaml
 from data.data_wrapper import DatasetHelper, CustomDataset
 import torch
-
+from torch.optim import lr_scheduler
 import argparse
 
 # create a relative path from existing root directory
@@ -64,6 +64,9 @@ def train(inputs, device):
 
     # define optimzer
     optimizer = torch.optim.SGD(model_params, lr=0.005, momentum=0.9, weight_decay=0.0005)
+
+    # define scheduler
+    scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=0.001)
 
     # train model
     epochs = 10
