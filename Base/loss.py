@@ -1,3 +1,4 @@
+from typing import Any
 import torch 
 import torch.nn as nn
 
@@ -74,6 +75,13 @@ class Loss:
         if gamma > 0:
             BCE_class, BCE_object = FocalLoss(BCE_class, gamma), FocalLoss(BCE_object, gamma)
         
-        
+    def __call__(self, prediction, labels):
+        # create loss tensors for class, box and object
+        class_loss = torch.zeros(1, device=self.device)
+        box_loss = torch.zeros(1, device=self.device)
+        object_loss = torch.zeros(1, device=self.device)
+
+        # extract the targets from the labels
+        class_target, box_target, indices, anchors = self.get_targets(prediction, labels)
 
         
