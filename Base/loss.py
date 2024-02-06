@@ -38,3 +38,42 @@ class FocalLoss(nn.Module):
         else:
             return loss
 
+
+class Loss:
+    """
+    Implements loss function calculations
+
+    Args:
+        model(PyTorch Model): a defined object detection model
+    
+    Returns:
+        loss
+    """
+    def __init__(self, model, autobalance=False):
+        # get the detection module from the model
+        detect_module = model.model[-1]
+
+        # create class members
+        self.num_anchors = detect_module.na
+        self.num_classes = detect_module.nc
+        self.num_layers = detect_module.nl
+        self.anchors = detect_module.anchors
+        self.device = next(model.parameters()).device
+
+        # get model hyper-parameters
+        hyper = model.hyp
+
+        # BCE for class and objects as criteria
+        BCE_class = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([hyper["cls_pw"]], device=self.device))
+        BCE_object = nn.BCEWithLogitsLoss(pos_weight=torch.tensor([hyper["obj_pw"]], device=self.device))
+
+        # get the gamma from model hyper-parameters
+        gamma = hyper["f1_gamma"]
+
+        # use focal loss as the criteria
+        if gamma > 0:
+            BCE_class, BCE_object = FocalLoss(BCE_class, gamma), FocalLoss(BCE_object, gamma)
+        
+        
+
+        
