@@ -4,6 +4,7 @@ import time
 from tqdm import tqdm
 from pathlib import Path
 from Base.yolo import Model
+from Base.loss import Loss
 from Utils.utils import check_file, parse_yaml
 from data.data_wrapper import DatasetHelper, CustomDataset
 import torch
@@ -25,15 +26,7 @@ if str(ROOT) not in sys.path:
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))
 
 def train(inputs, device):
-    """
-    Starts model's training using input arguments.
-
-    Args:
-        input(obj): argparser object containing input arguments
-
-    Returns:
-
-    """
+    """ Starts model's training using input arguments. """
     # define output dir and create it
     output = ROOT/"output"
     output.mkdir(parents=True, exist_ok=True)
@@ -68,6 +61,9 @@ def train(inputs, device):
     # define scheduler
     scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=0.001)
 
+    # define loss calculator
+    loss_calculator = Loss(model)
+
     # train model
     epochs = 10
     batches = len(train_dataloader)     # number of batches 
@@ -91,12 +87,15 @@ def train(inputs, device):
                 prediction = model(images)
 
                 # calcualte loss
-                loss = compute_loss(prediction, labels.to(device))
+                loss = loss_calculator(prediction, labels.to(device))
 
         # Backward
         g_scaler.scale(loss).backward()    
         g_scaler.step(optimizer)
         g_scaler.update()
+
+        # update the scheduler
+        scheduler.step()
 
     end = time.time()
 
