@@ -6,6 +6,7 @@ from pathlib import Path
 from Base.yolo import Model
 from Base.loss import Loss
 from Utils.utils import check_file, parse_yaml
+from Utils.logger import *
 from data.data_wrapper import DatasetHelper, CustomDataset
 import torch
 from torch.optim import lr_scheduler
@@ -25,79 +26,82 @@ if str(ROOT) not in sys.path:
 # create a relative of the ROOT
 ROOT = Path(os.path.relpath(ROOT, Path.cwd()))
 
-def train(inputs, device):
+def train(inputs, device) -> None:
     """ Starts model's training using input arguments. """
-    # define output dir and create it
+    # define output dir and weight params
     output = ROOT/"output"
-    output.mkdir(parents=True, exist_ok=True)
-
-    # define weights dir and create it
     weights_dir = output/"weights_dir"
+    last_weight = weights_dir/"last.pt"
+    best_weight = weights_dir/"best.pt"
+
+    # create dirs
+    output.mkdir(parents=True, exist_ok=True)
     weights_dir.mkdir(parents=True, exist_ok=True)
 
-    # define best and last weights
-    last = weights_dir/"last.pt"
-    best = weights_dir/"best.pt"
-
-    # get the training hyperparameters
-    train_hyp = parse_yaml(inputs.hyp)
-
-    # create the yolo model
-    model = create_yolo_model()
+    try:
+        # get the training hyperparameters and create model
+        train_hyp = parse_yaml(inputs.hyp)
+        model = create_yolo_model()
+        # load model on device and get the model parameters
+        model.to(device)
+        model_params = list(param for param in model.parameters() if param.requires_grad)
+        LOGGER.error(f"train: model created and parameters saved.")
+    except RuntimeError as err:
+        LOGGER.error(f"train: exception catched. {err}")
 
     # layers to be frozen
     frozen_layers = [f"model.{layer}" for layer in (inputs.freeze if len(inputs.freeze) > 1 else range(inputs.freeze[0]))]
 
-    # prepare datasets create dataloader from generated datasets
-    train_dataloader, valid_dataloader, test_dataloader = prepare_data(inputs.data)
+    try:
+        # prepare datasets create dataloader from generated datasets
+        train_dataloader, valid_dataloader, test_dataloader = prepare_data(inputs.data)
+        LOGGER.error(f"train: train/valid dataloader created.")
+    except RuntimeError as err:
+        LOGGER.error(f"train: train/valid dataloader NOT created. {err}")
 
-    # load model on device and get the model parameters
-    model.to(device)
-    model_params = list(param for param in model.parameters() if param.requires_grad)
-
-    # define optimzer
+    # define optimzer, scheduler, loss calculator, grad scalar and num_batches
     optimizer = torch.optim.SGD(model_params, lr=0.005, momentum=0.9, weight_decay=0.0005)
-
-    # define scheduler
     scheduler = lr_scheduler.CosineAnnealingLR(optimizer, T_max=10, eta_min=0.001)
-
-    # define loss calculator
     loss_calculator = Loss(model)
+    grad_scaler = torch.cuda.amp.GradScaler(True)
+    num_batches = len(train_dataloader) 
 
     # train model
     epochs = 10
-    batches = len(train_dataloader)     # number of batches 
     start = time.time()
-    
-    # grad scaler
-    g_scaler = torch.cuda.amp.GradScaler(True)
+    LOGGER.info("train: training started.")
     for epoch in range(epochs):
-        
-        model.train()
-        progress_bar = enumerate(train_dataloader)
-        progress_bar = tqdm(progress_bar, total=batches)
-        optimizer.zero_grad()
-        for idx, images, labels in progress_bar:
-            # normalize the image with type float32
-            images = images.to(device).float() / 255
+        try:
+            model.train()
+            progress_bar = enumerate(train_dataloader)
+            progress_bar = tqdm(progress_bar, total=num_batches)
+            optimizer.zero_grad()
+            for idx, images, labels in progress_bar:
+                # normalize the image with type float32
+                images = images.to(device).float() / 255
 
-            # Forward
-            with torch.cuda.amp.autocast(True):
-                # predict 
-                prediction = model(images)
+                # Forward
+                with torch.cuda.amp.autocast(True):
+                    # predict 
+                    prediction = model(images)
 
-                # calcualte loss
-                loss = loss_calculator(prediction, labels.to(device))
+                    # calcualte loss
+                    loss = loss_calculator(prediction, labels.to(device))
 
-        # Backward
-        g_scaler.scale(loss).backward()    
-        g_scaler.step(optimizer)
-        g_scaler.update()
+            # Backward
+            grad_scaler.scale(loss).backward()    
+            grad_scaler.step(optimizer)
+            grad_scaler.update()
 
-        # update the scheduler
-        scheduler.step()
+            # update the scheduler
+            scheduler.step()
+            LOGGER.info(f"train: epoch_{epoch} finished. loos: {loss}")
+        except RuntimeError as err:
+            end = time.time()
+            LOGGER.error(f"train: training stopped at epoch_{epoch}, Elapsed time {end - start}s")
 
     end = time.time()
+    LOGGER.info(f"train: training finished. Elapsed time: {end - start}s")
 
 def prepare_data(data_yaml, cls_num=1):
     """
