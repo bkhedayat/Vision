@@ -12,3 +12,7 @@ class Logger:
         # set the logging level to warning
         logging.getLogger(LOGGING_NAME).setLevel(logging.WARNING)
         return logging.getLogger(__name__)
+
+
+# create Logger instance
+LOGGER = Logger().create()
