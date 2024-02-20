@@ -1,22 +1,19 @@
-import sys
-import os
 import time
 from tqdm import tqdm
 from pathlib import Path
 from Base.yolo import Model
 from Base.loss import Loss
-from Utils.utils import check_file, parse_yaml
+from Utils.utils import *
 from Utils.logger import *
-from data.data_wrapper import DatasetHelper, CustomDataset
+from data.data_wrapper import DatasetHelper
 import torch
 from torch.optim import lr_scheduler
 import argparse
 
-# create a relative path from existing root directory
-# get the path of the train.py
-TRAIN = Path(__file__).resolve()
+VERSION = "0.1.0.0"
 
-# get the first parrent dir as ROOT
+# get the path of the train.py and the root dir
+TRAIN = Path(__file__).resolve()
 ROOT = TRAIN.parents[0]
 
 # add the ROOT to sys.path
@@ -41,13 +38,14 @@ def train(inputs, device) -> None:
     try:
         # get the training hyperparameters and create model
         train_hyp = parse_yaml(inputs.hyp)
-        model = create_yolo_model()
+        model = Model(inputs.config, ch_num=3)
         # load model on device and get the model parameters
         model.to(device)
         model_params = list(param for param in model.parameters() if param.requires_grad)
         LOGGER.error(f"train: model created and parameters saved.")
-    except RuntimeError as err:
-        LOGGER.error(f"train: exception catched. {err}")
+    except Exception as err:
+        LOGGER.error(f"train: create model failed. {type(err)}, {err}")
+        sys.exit(1)
 
     # layers to be frozen
     frozen_layers = [f"model.{layer}" for layer in (inputs.freeze if len(inputs.freeze) > 1 else range(inputs.freeze[0]))]
@@ -55,9 +53,10 @@ def train(inputs, device) -> None:
     try:
         # prepare datasets create dataloader from generated datasets
         train_dataloader, valid_dataloader, test_dataloader = prepare_data(inputs.data)
-        LOGGER.error(f"train: train/valid dataloader created.")
-    except RuntimeError as err:
-        LOGGER.error(f"train: train/valid dataloader NOT created. {err}")
+        LOGGER.error(f"train: dataloaders created.")
+    except Exception as err:
+        LOGGER.error(f"train: dataloaders NOT created. {type(err)}: {err}")
+        sys.exit(1)
 
     # define optimzer, scheduler, loss calculator, grad scalar and num_batches
     optimizer = torch.optim.SGD(model_params, lr=0.005, momentum=0.9, weight_decay=0.0005)
@@ -96,47 +95,50 @@ def train(inputs, device) -> None:
             # update the scheduler
             scheduler.step()
             LOGGER.info(f"train: epoch_{epoch} finished. loos: {loss}")
-        except RuntimeError as err:
+        except Exception as err:
             end = time.time()
-            LOGGER.error(f"train: training stopped at epoch_{epoch}, Elapsed time {end - start}s")
-
+            LOGGER.error(f"train: training stopped at epoch_{epoch}, Elapsed time {end - start}s, {type(err)}: {err}")
+            sys.exit(1)
+        
     end = time.time()
     LOGGER.info(f"train: training finished. Elapsed time: {end - start}s")
 
-def prepare_data(data_yaml, cls_num=1):
-    """
-    Prepares datasets for training and validataion
+def prepare_data(data_yaml, cls_num=1) -> tuple:
+    """ Prepares datasets for training and validataion. """
+    try:
+        # create the data helper object to prepare datasets
+        data_helper = DatasetHelper(data_yaml)
 
-    Args:
-        data_yaml(str): path to the data_yaml file
+        # get data dictionary from data_helper
+        data_dict = DatasetHelper.create_datasets(cls_num)
 
-    Returns:
-        data loaders(obj): train, valid, test dataloaders
-    """
-    # create the data helper object to prepare datasets
-    data_helper = DatasetHelper(data_yaml)
+        # create dataloader from generated datasets
+        return data_helper.create_dataloaders(data_dict=data_dict)
+    except Exception as err:
+        LOGGER.error(f"prepare_data: failed, {type(err)}: {err}")
+        sys.exit(1)
 
-    # get data dictionary from data_helper
-    data_dict = DatasetHelper.create_datasets(cls_num)
-
-    # create dataloader from generated datasets
-    return data_helper.create_dataloaders(data_dict=data_dict)
 
 def init():
-    # log intro
-    sw_version = 0.1
-    print_version(sw_version)
+    LOGGER.info(f"init: Yolov5 model SW version: {VERSION}")
 
-    # parse arguments
-    inputs = parse_args()
+    try:
+        # parse arguments
+        inputs = parse_args()
+    except Exception as err:
+        LOGGER.error(f"init: input args not parsed, {type(err)}: {err}")
+        sys.exit(1)
 
-    # get the parameters from the inputs and check if they exist
-    inputs.data, inputs.config, inputs.weights, inputs.hyp = \
-          check_file(inputs.data), check_file(inputs.config), str(inputs.weights), check_file(inputs.hyp)
-    assert len(inputs.data), "init: ERROR: data.yaml is missing"
-    assert len(inputs.config), "init: ERROR: config.yaml is missing"
-    assert len(inputs.weights), "init: ERROR: model weights 'XXX.pt' is missing"
-    assert len(inputs.hyp), "init: ERROR: hyp.yaml is missing"
+    try:
+        # get the parameters from the inputs and check if they exist
+        inputs.data = check_file(inputs.data)
+        inputs.config = check_file(inputs.config)
+        inputs.hyp = check_file(inputs.hyp)
+        inputs.weights = check_file(inputs.weights)
+        
+    except Exception as exp:
+        LOGGER.error(f"init: get input data failed, {type(err)}: {err}")
+        sys.exit(1)
 
     # get the torch device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -156,16 +158,6 @@ def parse_args():
     parser.add_argument("--input-size", type=int, default=512, help="input size of image in pixels")
     parser.add_argument("--freeze", nargs="+", type=int, default=[0], help="freeze layers: [5] or [1, 2, 3, 4, 5]")
     return parser.parse_args()
-
-def create_yolo_model():
-    # creates yolo model and return it
-    vision_model = Model("Base/config.yaml", 3)
-    return vision_model
-
-def print_version(version):
-    print("\n ###############################################\n")
-    print("         JARVIS, Software version: {}".format(version))
-    print("\n ###############################################\n")
 
 if __name__ == "__main__":
 
