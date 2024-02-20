@@ -4,7 +4,7 @@ import yaml
 from logger import *
 from copy import deepcopy
 
-def check_file(file) -> None:
+def check_file(file) -> str:
     """ Checks if the file exists. """ 
     try:
         # convert file to str format
@@ -12,6 +12,7 @@ def check_file(file) -> None:
         if os.path.isfile(file) == False:
             raise Exception(f"check_file: {file} does not exist.")
         LOGGER.info(f"check_file: {file} exists.")
+        return file
     except Exception as exp:
         LOGGER.error(f"check_file: {type(exp)}, {exp}")
         sys.exit(1)
