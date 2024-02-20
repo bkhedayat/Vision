@@ -38,7 +38,7 @@ def train(inputs, device) -> None:
     try:
         # get the training hyperparameters and create model
         train_hyp = parse_yaml(inputs.hyp)
-        model = Model(inputs.config, ch_num=3)
+        model = Model(inputs.config, channel_num=3)
         # load model on device and get the model parameters
         model.to(device)
         model_params = list(param for param in model.parameters() if param.requires_grad)
