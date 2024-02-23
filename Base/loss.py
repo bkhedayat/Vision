@@ -1,7 +1,7 @@
 from typing import Any
 import torch 
 import torch.nn as nn
-from metrics import calculate_iou
+from .metrics import calculate_iou
 
 class FocalLoss(nn.Module):
     """ Class FocalLoss implements the focal loss function wrapped around BCEwithLogits loss fucntion"""

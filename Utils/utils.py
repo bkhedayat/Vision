@@ -1,7 +1,7 @@
 import sys
 import os
 import yaml
-from logger import *
+from .logger import *
 from copy import deepcopy
 
 def check_file(file) -> str:
