@@ -3,16 +3,16 @@ import logging
 LOGGING_NAME = "Yolo"
 class Logger:
     "Implements log messages"
-    def init():
+    def __init__(this):
         # set basic config
         logging.basicConfig(format="%(asctime)s: %(name)s: %(message)s", level=logging.INFO)
 
-    def create(this) -> logging.Logger:
+    def create(this, name):
         """ Creates the logger"""
         # set the logging level to warning
-        logging.getLogger(LOGGING_NAME).setLevel(logging.WARNING)
+        logging.getLogger(name).setLevel(logging.WARNING)
         return logging.getLogger(__name__)
 
 
 # create Logger instance
-LOGGER = Logger().create()
+LOGGER = Logger().create(LOGGING_NAME)
