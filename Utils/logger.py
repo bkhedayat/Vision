@@ -5,7 +5,7 @@ class Logger:
     "Implements log messages"
     def __init__(this):
         # set basic config
-        logging.basicConfig(format="%(asctime)s: %(name)s: %(message)s", level=logging.INFO)
+        logging.basicConfig(filename="vision.log", filemode="a",format="%(asctime)s: %(name)s: %(message)s", level=logging.INFO)
 
     def create(this, name):
         """ Creates the logger"""
