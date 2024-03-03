@@ -32,6 +32,7 @@ class Detect(nn.Module):
             self.inplace = inplace
         except Exception as exp:
             LOGGER.error(f"Detect: init failed: {exp}")
+            raise Exception("Detect: init failed.")
         
         print("Detect constructor is finished!")
 
