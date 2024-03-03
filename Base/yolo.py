@@ -7,13 +7,13 @@ from .head import Detect
 
 class LayerData:
     """ Holds the parsed data of the layers"""
-    def __init__(self, index, input_layer, type, args):
+    def __init__(self, index, input_layer, type, args) -> None:
         self.index = index              # index of the layer
         self.input_layer = input_layer  # input from previous layer or other layers defined by index    
         self.type = type                # type of layer: ConvLayer, C3Layer, Detect, etc.
         self.args = args                # list of arguments that is essential to create a layer
 
-    def create_module(self, amount, num_classes, anchors) -> None:
+    def create_module(self, amount, num_classes, anchors) -> any:
         """ Creates a module from the layer. """  
         try:
             # create a module from layers  
@@ -42,13 +42,17 @@ class LayerData:
 
 class Model(nn.Module):
     """ Create Model using layers of backbone, neck amd head from config.yaml file. """ 
-    def __init__(self, config, channel_num=3):
-        super().__init__()
-        self.config = parse_yaml(config)    # path to config.yaml
-        self.ch_input_list= [channel_num]   # ch_input_list contais input channel for each layer. First element: channel_num
-        self.layers = []                    # list of layers
+    def __init__(self, config, channel_num=3) -> None:
+        try:
+            super().__init__()
+            self.config = parse_yaml(config)    # path to config.yaml
+            self.ch_input_list= [channel_num]   # ch_input_list contais input channel for each layer. First element: channel_num
+            self.layers = []                    # list of layers
+        except Exception as exp:
+            LOGGER.error(f"Model: init failed: {type(exp)}: {exp}")
+            raise Exception("Model: init failed!")
 
-    def parse_model(self):
+    def parse_model(self) -> nn.Sequential:
         """ Get different components from the config.yaml and construct the model. """  
         try:
             # get the yaml parameters
