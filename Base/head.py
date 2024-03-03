@@ -12,10 +12,12 @@ class Detect(nn.Module):
     def __init__(self, ch, num_class, anchors, inplace=True) -> None:
         try:
             super().__init__()
-            self.num_class = num_class                  # num of detected classes
-            self.num_outputs = 5 + self.num_class       # num of generated outputs (p, x, y, w, h, p1, p2, ..., pn)
-            self.num_detect_layers = len(anchors)       # num of detection layers
-            self.num_anchors = len(anchors[0]) // 2     # num of anchors
+            self.num_class = num_class                       # num of detected classes
+            self.num_outputs = 5 + self.num_class            # num of generated outputs (p, x, y, w, h, p1, p2, ..., pn)
+            self.num_detect_layers = len(anchors)            # num of detection layers
+            self.anchors = anchors                           # anchors
+            self.num_anchors = len(self.anchors[0]) // 2     # num of anchors
+            self.num_layers = 1                              # num of layers
 
             # init grid tensors
             self.grid = [torch.empty(0) for _ in range(self.num_detect_layers)]
