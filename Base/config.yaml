@@ -50,5 +50,5 @@ neck:
 
 # model head
 head:
-  [[[17, 20 , 23], 1, Detect, [num_classes, anchors]],  # Detect P3, P4, P5
+  [[[17, 20 , 23], 1, Detect, []],  # Detect P3, P4, P5
   ]
