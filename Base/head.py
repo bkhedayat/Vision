@@ -1,43 +1,38 @@
 import torch
 import torch.nn as nn
 
+from Utils.utils import *
+
 class Detect(nn.Module):
-    # class Detect implements the head of object detection model
-    # dynamic grid-scaling, used if the input images are in different sizes
-    dynamic = False
-    # strides computed during build
-    stride = None  
-    # export mode: no loss or back probagate is calculated, only used for prediction
-    export = False  
+    """ Implements the head of object detection model. """
+    dynamic = False     # dynamic grid-scaling, used if the input images are in different sizes
+    stride = None       # strides computed during build
+    export = False      # export mode: no loss or back probagate is calculated, only used for prediction
 
-    def __init__(self, num_class=3, anchors=(), ch=(), inplace=True):
-        super().__init__()
-        # num of detected classes
-        self.num_class = num_class
-        
-        # num of generated outputs (p, x, y, w, h, p1, p2, ..., pn)
-        self.num_outputs = 5 + num_class
+    def __init__(self, ch, num_class, anchors, inplace=True):
+        try:
+            super().__init__()
+            self.num_class = num_class                  # num of detected classes
+            self.num_outputs = 5 + self.num_class       # num of generated outputs (p, x, y, w, h, p1, p2, ..., pn)
+            self.num_detect_layers = len(anchors)       # num of detection layers
+            self.num_anchors = len(anchors[0]) // 2     # num of anchors
 
-        # num of detection layers
-        self.num_detect_layers = len(anchors)
-
-        # num of anchors
-        self.num_anchors = len(anchors[0]) // 2
-
-        # init grid tensors
-        self.grid = [torch.empty(0) for _ in range(self.num_detect_layers)]
+            # init grid tensors
+            self.grid = [torch.empty(0) for _ in range(self.num_detect_layers)]
         
-        # init anchor_grid tensors
-        self.grid_anchor = [torch.empty(0) for _ in range(self.num_detect_layers)]
+            # init anchor_grid tensors
+            self.grid_anchor = [torch.empty(0) for _ in range(self.num_detect_layers)]
         
-        # save weight and biases as buffer(not trainable)
-        # shape of the anchor tensor: [num_detect_layers, num_anchors, 2]
-        self.register_buffer("anchors", torch.tensor(anchors).float().view(self.num_detect_layers, -1, 2))
+            # save weight and biases as buffer(not trainable), anchor tensor shape: [num_detect_layers, num_anchors, 2]
+            self.register_buffer("anchors", torch.tensor(anchors).float().view(self.num_detect_layers, -1, 2))
         
-        # save modules in module list as output conv
-        self.module_list = nn.ModuleList(nn.Conv2d(x, self.num_outputs * self.num_anchors, 1) for x in ch)
+            # save modules in module list as output conv
+            self.module_list = nn.ModuleList(nn.Conv2d(x, self.num_outputs * self.num_anchors, 1) for x in ch)
         
-        self.inplace = inplace
+            self.inplace = inplace
+        except Exception as exp:
+            LOGGER.error(f"Detect: init failed: {exp}")
+        
         print("Detect constructor is finished!")
 
     def forward(self, x):
@@ -103,6 +98,3 @@ class Detect(nn.Module):
         # create anchor_grid tensor to predict with and height of bbox
         anchor_grid = (self.anchors[idx] * self.stride[idx]).view((1, self.num_anchors, 1, 1, 2)).expand(shape)
         return grid, anchor_grid
-
-if __name__ == "__main__":
-    head = Detect(3, [[10,13, 16,30, 33,23], [10,13, 16,30, 33,23]])
