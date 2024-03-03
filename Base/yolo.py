@@ -1,85 +1,105 @@
-import sys
 import torch.nn as nn
-from ..Utils.utils import parse_yaml
+from Utils.utils import *
 
-sys.path.append("./Base")
+from .backbone import ConvLayer, C3Layer, SPPF
+from .neck import Concat
+from .head import Detect
 
-from backbone import ConvLayer, C3Layer, SPPF
-from neck import Concat
-from head import Detect
+class LayerData:
+    """ Holds the parsed data of the layers"""
+    def __init__(self, index, input_layer, type, args):
+        self.index = index              # index of the layer
+        self.input_layer = input_layer  # input from previous layer or other layers defined by index    
+        self.type = type                # type of layer: ConvLayer, C3Layer, Detect, etc.
+        self.args = args                # list of arguments that is essential to create a layer
 
+    def create_module(self, amount, num_classes, anchors) -> None:
+        """ Creates a module from the layer. """  
+        try:
+            # create a module from layers  
+            if amount > 1:
+                layers = []
+                for _ in range(amount):
+                    layers.append(self.type(*self.args))
+                module = nn.Sequential(*(layers))
+            else:
+                if(self.type == Detect):
+                    self.args.append(num_classes)   # append the num of classes
+                    self.args.append(anchors)       # append the anchors
+                module = self.type(*self.args)
+                
+            # calculate each number of parameters for each module
+            module.num_params = sum(x.numel() for x in module.parameters())
+                
+            # assign module's index and input_from_layers
+            module.index, module.input_from_layers = self.index, self.input_layer
+        
+            LOGGER.info(f"create_module: layer{self.index}, type:{self.type}, num_layers:{amount}, args:{self.args} added.")
+            return module
+        except Exception as exp:
+            LOGGER.error(f"create_module: failed: {type(exp)}: {exp}")
+            raise Exception(f"could not create module from layer{self.index}: {self.type}")
 
 class Model(nn.Module):
-    """
-    class model get yaml config file and parse it. Creates backbone, neck and head components and fuses them
-    ch_number is the number of channels of the input images
-    class_number defines how many classes model can detect
-    config is the path to model config yaml file
-    """ 
-    def __init__(self, config, ch_num=3, class_num=1):
+    """ Create Model using layers of backbone, neck amd head from config.yaml file. """ 
+    def __init__(self, config, channel_num=3):
         super().__init__()
-        self.config = config
-        self.ch_num = ch_num
-        self.class_num = class_num
+        self.config = parse_yaml(config)    # path to config.yaml
+        self.ch_input_list= [channel_num]   # ch_input_list contais input channel for each layer. First element: channel_num
+        self.layers = []                    # list of layers
 
     def parse_model(self):
-        """
-        get different components from the config.yaml and construct the model
-        """
-        # get different components from the model dictionary
-        mode_config = parse_yaml(self.config)
-        
-        # get number of classes
-        num_classes = mode_config["num_classes"]
-        print("Number of classes: {}".format(num_classes))
+        """ Get different components from the config.yaml and construct the model. """  
+        try:
+            # get the yaml parameters
+            num_classes = int(self.config["num_classes"])
+            anchors = self.config['anchors']
+            backbone = self.config["backbone"]
+            neck = self.config["neck"]
+            head = self.config["head"]
 
-        # get the anchor boxes
-        anchors = mode_config['anchors']
-        print("Anchor boxes: {}".format(anchors))
-        
-        print("Parsing backbone, neck and head data:")
-        layers = []
-        for iter, (input_from, num_layers, layer_type, args) in enumerate(mode_config["backbone"] + mode_config["neck"] + mode_config["head"]):
-            # create args list
-            for indx,value in enumerate(args):
-                args[indx] = eval(value) if isinstance(value, str) else value
+            for iter, (input_from_layers, num_layers, layer_type, args) in enumerate( backbone + neck + head):
+                # use eval to change str to class
+                layer_type = eval(layer_type)
 
-            # edit args lits based on the layer type 
-            layer_type = eval(layer_type)
+                if layer_type in {ConvLayer, C3Layer, SPPF}:
+                    # assign the size of input and output channels       
+                    ch_in, ch_out = self.ch_input_list[input_from_layers], args[0]
+                    self.ch_input_list.append(ch_out)
 
-            # backbone and neck layers
-            if layer_type in {ConvLayer, C3Layer, SPPF}:
-                # assign the size of input and output channels       
-                c_in, c_out = self.ch_num[input_from], args[0]
-                args = [c_in, c_out, *args[1:]]
+                    # reformat args list
+                    args = [ch_in, ch_out, *args[1:]]
                 
-                # C3 layers has more than 1 layer
-                if layer_type is C3Layer:
-                    args.insert(2, num_layers)
+                    # C3 layers has more than 1 layer
+                    if layer_type is C3Layer:
+                        args.insert(2, num_layers)
+
+                elif layer_type is Concat:
+                    ch_out = sum(self.ch_input_list[layer] for layer in input_from_layers)
+                    self.ch_input_list.append(ch_out)
+
+                elif layer_type is nn.Upsample:
+                    self.ch_input_list.append(self.ch_input_list[-1])
+
+                elif layer_type is Detect:
+                    args.append([self.ch_input_list[layer] for layer in input_from_layers])
+                    self.ch_input_list.append(ch_out)
+
+                else:
+                    raise Exception(f"parse model: unknow layer type: {layer_type}")
+
+                # create LayerData object
+                layer = LayerData(iter, input_from_layers, layer_type, args)
             
-            # neck Concat layer 
-            elif layer_type is Concat:
-                c_out = sum(self.ch_num[layer] for layer in input_from) 
-
-            # head Detection layer
-            elif layer_type is Detect:
-                args.append([self.ch_num[layer] for layer in input_from])    
-
-            # create a sequential module of layers    
-            module = nn.Sequential(*(layer_type(*args) for _ in range(num_layers))) if num_layers > 1 else layer_type(*args)
-
-            # edit layer type and assign it to the module                 
-            module.layer_type = str(layer_type)[8:-2].replace('__main__.', '')
-
-            # calculate model parameters
-            module.num_params = sum(x.numel() for x in module.parameters())
-
-            # index, input from
-            module.index, module.input_from = iter, input_from
+                # add module to the layer list
+                self.layers.append(layer.create_module(num_layers, num_classes, anchors))
             
-            # added module to the layer list
-            layers.append(module)
+            LOGGER.info("parse_model: model created!")
+            return nn.Sequential(*self.layers)
+        except Exception as exp:
+            LOGGER.error(f"parse_model: model NOT parsed, {type(exp)}, {exp}")
+            raise Exception("parse_model: could not create model.")
+        
+    
 
-            print("layer{}: type:{} with num_param:{} added to Sequential.".format(module.index, module.layer_type, module.num_params))
-
-        return nn.Sequential(*layers)
+        
