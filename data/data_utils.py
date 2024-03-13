@@ -1,12 +1,7 @@
 import os, shutil, random
 
-def prepare_paths(dir):
-    """ 
-    deletes exisiting and all sub dir of the given path &
-    recreate them with img and label sub dirs     
-    : param dir is the path object to the directory
-    """
-
+def create_data_dir(dir) -> None:
+    """ Creates a directories for img data and label. """
     # check if the train/val/test dirs are available and delete them
     if os.path.exists(str(dir)):
         shutil.rmtree(str(dir))
