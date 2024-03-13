@@ -1,8 +1,8 @@
 from torch.utils.data import Dataset, DataLoader
 import cv2 as cv
 
-from .data_utils import prepare_paths, copy_data
-from Utils.utils import parse_yaml
+from .data_utils import create_data_dir, copy_data
+from Utils.utils import parse_yaml, LOGGER
 
 import sys
 import os
@@ -65,60 +65,43 @@ class CustomDataset(Dataset):
 
 
 class DatasetHelper:
-    """
-    DatasetHelper prepares the main dataset and directories
-    required for training and testing using data_aug.yaml
+    """ Prepares the main dataset and directories required for training and testing using data_aug.yaml. """
+    def __init__(self, data_yaml, split_ratio=0.8) -> None:
+        try:
+            self.hyper = parse_yaml(data_yaml)
+            self.class_names = self.hyper['class_names']
+            self.main_data_dir = str((ROOT/"data/dataset/main/").resolve())
+            self.split_ratio = split_ratio
+        except Exception as exp:
+            LOGGER.error(f"DatasetHelper: init error: {type(exp)}: {exp}")
+            raise Exception("DatasetHelper: init failed!")
 
-    Args:
-        data_yaml (str): path to data_aug.yaml
-        split_ratio (float): train-valid-test split ratio
-    """
-    def __init__(self, data_yaml, split_ratio=0.8):
-        self.hyper = parse_yaml(data_yaml)
-        self.class_names = self.hyper['class_names']
-        self.main_data_dir = str((ROOT/"data/dataset/main/").resolve())
-        self.split_ratio = split_ratio
+    def create_datasets(self, cls_num=1) -> dict:
+        """ Creates train, valid and test sets. """
+        try:
+            # check the class number with len of class names
+            if len(self.class_names) != cls_num:
+                raise Exception("create_datasets: class names & number of classes are different!")
+            
+                    # resolve the paths for train, val and test and make them absolute
+            for x in "train_dir", "valid_dir", "test_dir":
+                if self.hyper.get(x):
+                    if isinstance(self.hyper[x], str):
+                        # create directores
+                        create_data_dir(str((ROOT/self.hyper[x]).resolve()))
+                else:
+                    raise Exception(f"{x} doest not exist in yaml!")
+                
+            # get list of dataset indexs, images and annotations
+            image_list, label_list = self.read_main_data(self.main_data_dir)
 
-    def create_datasets(self, cls_num):
-        """
-        Creates train, valid and test sets.
+            # return dataset dictionary   
+            return self.split_data(image_list, label_list) 
 
-        Args:
-            cls_num (int): number of classes to detect
-
-        Returns:
-            train, valid, test datasets (list)
-
-        """
-
-        # check the class number with len of class names
-        assert len(self.class_names) == cls_num, "create_datasets: ERROR: class names & number of classes are different!"
-
-        # resolve the paths for train, val and test and make them absolute
-        for x in "train_dir", "valid_dir", "test_dir":
-            if self.hyper.get(x):
-                if isinstance(self.hyper[x], str):
-                    # resolve the path and store the string
-                    self.hyper[x] = str((ROOT/self.hyper[x]).resolve())
-
-                    # prepare sub directores for the given path
-                    prepare_paths(self.hyper[x])
-
-            else:
-                print("create_datasets: ERROR: {} doest not exist in yaml!".format(x))
-                # exit the program
-                sys.exit(1)
-
-        
-        # get list of dataset indexs, images and annotations
-        image_list, label_list = self.read_main_data(self.main_data_dir)
-        
-        # copy the train / valid / test data in corresponding dir
-        data_dict = self.split_data(image_list, label_list)          
-
-        # return dataset dictionary   
-        return data_dict
-    
+        except Exception as exp:
+            LOGGER.error(f"create_datasets: error: {type(exp)}: {exp}")
+            raise Exception("create_datasets: failed!")
+ 
     def create_dataloaders(self, data_dict):
         """
         Creates Dataset objects from data_dict lists.
