@@ -93,7 +93,7 @@ class DatasetHelper:
                     raise Exception(f"{x} doest not exist in yaml!")
                 
             # get list of dataset indexs, images and annotations
-            image_list, label_list = self.read_main_data(self.main_data_dir)
+            image_list, label_list = self.create_data_lists(self.main_data_dir)
 
             # return dataset dictionary   
             return self.split_data(image_list, label_list) 
@@ -181,32 +181,17 @@ class DatasetHelper:
 
         return {"train" : [train_image, train_label], "valid" : [valid_image, valid_label], "test" : [test_image, test_label]}
         
-
-        
-
-    def read_main_data(self, main_dir):
-        """
-        Reads the images and labels from main data directory
-    
-        Args:
-            main_dir(str): path of the main data directory
-    
-        Returns: 
-            images(list): list of images
-            labels(list): list of labels
-        """
+    def create_data_lists(self, main_dir) -> any:
+        """ Reads the images and labels from main data directory and create lists of imgs and labels ."""
         images = []
         labels = []
         # get the images and labels from main dataset
         for root, dirs, files in os.walk(main_dir):
+            if len(files) == 0:
+                    raise Exception("create_data_lists: main folder is empty!")
             for file in files:
                 if file.endswith(".png"):
-                    # create an image path and append it to the list 
-                    img_path = self.main_data_dir + "/" + file
-                    images.append(img_path)
+                    images.append(str(self.main_data_dir + "/" + file))
                 else:
-                    # create a label path and append it to the list
-                    label_path = self.main_data_dir + "/" + file
-                    labels.append(label_path)
-
+                    labels.append(str(self.main_data_dir + "/" + file))
         return images, labels
