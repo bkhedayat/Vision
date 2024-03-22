@@ -53,9 +53,11 @@ class DatasetHelper:
             LOGGER.error(f"DatasetHelper: init error: {type(exp)}: {exp}")
             raise Exception("DatasetHelper: init failed!")
 
-    def create_datasets(self) -> dict:
+    def create_datasets(self, num_cls) -> dict:
         """ Creates train, valid and test sets. """
         try:
+            if num_cls != len(self.hyper["class_names"]):
+                raise Exception("create_datasets: num of output classes does not match with defined class_names.")
             # resolve the paths for train, val and test and make them absolute
             for x in "train_dir", "valid_dir", "test_dir":
                 if isinstance(self.hyper[x], str):
