@@ -86,15 +86,16 @@ class DatasetHelper:
             LOGGER.error("create_dataloaders: create CustomDataset obj failed")
             raise Exception("create_dataloaders: failed")
         
+        try:
+            # create dataloaders
+            train_loader = DataLoader(train_dataset, batch_size=8, drop_last=True, shuffle=True)
+            valid_loader = DataLoader(valid_dataset, batch_size=8, drop_last=True, shuffle=True)
+            test_loader = DataLoader(test_dataset, batch_size=1)
+            return (train_loader, valid_loader, test_loader)
+        except Exception as exp:
+            LOGGER.error("create_dataloaders: create DataLoader obj failed")
+            raise Exception("create_dataloaders: failed")
 
-        # create dataloaders
-        train_loader = DataLoader(train_dataset, batch_size=8, drop_last=True, shuffle=True)
-        valid_loader = DataLoader(valid_dataset, batch_size=8, drop_last=True, shuffle=True)
-        test_loader = DataLoader(test_dataset, batch_size=1)
-
-        return (train_loader, valid_loader, test_loader)
-
-    
     def split_data(self, image_list, label_list) -> dict:
         """ Split data to train, dev, test using the split ratio. """
         if len(image_list) == 0 or len(label_list) == 0:
