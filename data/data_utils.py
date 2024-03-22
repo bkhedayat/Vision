@@ -1,11 +1,13 @@
-import os, shutil, random
+import os, shutil
+from ..Utils.logger import LOGGER
 
-def create_data_dir(dir) -> None:
+def create_dir(dir) -> None:
     """ Creates a directories for img data and label. """
     # check if the train/val/test dirs are available and delete them
     if os.path.exists(str(dir)):
         shutil.rmtree(str(dir))
-            
+        LOGGER.info(f"create_dir: {dir} deleted!")
+        
     # create new sub dirs for images and labels
     os.mkdir(str(dir))
     os.mkdir(str(dir/"img"))
