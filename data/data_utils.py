@@ -1,5 +1,5 @@
 import os, shutil
-from ..Utils.logger import LOGGER
+from Utils.logger import LOGGER
 
 def create_dir(dir) -> None:
     """ Creates a directories for img data and label. """
@@ -12,20 +12,10 @@ def create_dir(dir) -> None:
     os.mkdir(str(dir))
     os.mkdir(str(dir/"img"))
     os.mkdir(str(dir/"label"))
+    LOGGER.info(f"create_dir: {dir} created!")
 
-def copy_data(img_path, annot_path, copy_dir, data_type):
-    """
-    Copy image and annotation to specified directories
-
-    Args:
-        img_path (str): absolute image path
-        annot_path (str): absolute annotation path
-        copy_dir (str): directory to copy image and annotations
-        data_type (str): type of image data that is copied
-    
-    Returns:
-
-    """
+def copy_data(img_path, annot_path, copy_dir, data_type) -> None:
+    """ Copies image and annotation to specified directories. """
     # define directories
     img_dir = copy_dir + "/" + data_type + "/img"
     annot_dir = copy_dir + "/" + data_type + "/label"
@@ -33,5 +23,4 @@ def copy_data(img_path, annot_path, copy_dir, data_type):
     # copy files to directories
     shutil.copy(img_path, img_dir)
     shutil.copy(annot_path, annot_dir)
-    
-    print("copy_data: LOG: {} data added!".format(data_type))
+    LOGGER.info(f"copy_data: {data_type} data added!")
