@@ -1,8 +1,8 @@
 from torch.utils.data import Dataset, DataLoader
 import cv2 as cv
 
-from .data_utils import create_data_dir, copy_data
-from Utils.utils import parse_yaml, LOGGER
+from .data_utils import create_dir, copy_data, LOGGER
+from Utils.utils import parse_yaml
 
 import sys
 import os
@@ -69,28 +69,22 @@ class DatasetHelper:
     def __init__(self, data_yaml, split_ratio=0.8) -> None:
         try:
             self.hyper = parse_yaml(data_yaml)
-            self.class_names = self.hyper['class_names']
             self.main_data_dir = str((ROOT/"data/dataset/main/").resolve())
             self.split_ratio = split_ratio
         except Exception as exp:
             LOGGER.error(f"DatasetHelper: init error: {type(exp)}: {exp}")
             raise Exception("DatasetHelper: init failed!")
 
-    def create_datasets(self, cls_num=1) -> dict:
+    def create_datasets(self) -> dict:
         """ Creates train, valid and test sets. """
         try:
-            # check the class number with len of class names
-            if len(self.class_names) != cls_num:
-                raise Exception("create_datasets: class names & number of classes are different!")
-            
-                    # resolve the paths for train, val and test and make them absolute
+            # resolve the paths for train, val and test and make them absolute
             for x in "train_dir", "valid_dir", "test_dir":
-                if self.hyper.get(x):
-                    if isinstance(self.hyper[x], str):
-                        # create directores
-                        create_data_dir(str((ROOT/self.hyper[x]).resolve()))
+                if isinstance(self.hyper[x], str):
+                    # create directores
+                    create_dir(str((ROOT/self.hyper[x]).resolve()))
                 else:
-                    raise Exception(f"{x} doest not exist in yaml!")
+                    raise Exception(f"{x} entry is not a str type!")
                 
             # get list of dataset indexs, images and annotations
             image_list, label_list = self.create_data_lists(self.main_data_dir)
@@ -99,7 +93,7 @@ class DatasetHelper:
             return self.split_data(image_list, label_list) 
 
         except Exception as exp:
-            LOGGER.error(f"create_datasets: error: {type(exp)}: {exp}")
+            LOGGER.error(f"create_datasets: {type(exp)}: {exp}")
             raise Exception("create_datasets: failed!")
  
     def create_dataloaders(self, data_dict):
@@ -129,33 +123,16 @@ class DatasetHelper:
         return train_loader, valid_loader, test_loader
 
     
-    def split_data(self, image_list, label_list):
-        """
-        Split data using the split ratio and copy img + annot to directories
-        
-        Args:
-            image_list (list): list of images
-            label_list (list): list of labels
-        
-        Returns:
-            (dict): dictionary of train, valid and test datasets
-        """
-        # calculcate number of index for tarin data
-        num_train_data = int(len(image_list)*self.split_ratio)
-
-        # calculate number of index for valid data
-        num_valid_data = int(len(image_list)*(1-self.split_ratio)/2)
+    def split_data(self, image_list, label_list) -> dict:
+        """ Split data to train, dev, test using the split ratio. """
+        if len(image_list) == 0 or len(label_list) == 0:
+            raise Exception("split_data: empty input image or annot list!")
+        num_train_data = int(len(image_list)*self.split_ratio)          # num train data
+        num_valid_data = int(len(image_list)*(1-self.split_ratio)/2)    # num validation data
 
         # define copy directory
         copy_dir = str(ROOT/"data/dataset")
-
-        # define the train / valid / test lists
-        train_image = []
-        train_label = []
-        valid_image = []
-        valid_label = []
-        test_image = []
-        test_label = []
+        train_image, train_label, valid_image, valid_label, test_image, test_label = []
 
         # split the images and annotation based on the train split
         for idx, _ in enumerate(image_list):
@@ -183,8 +160,7 @@ class DatasetHelper:
         
     def create_data_lists(self, main_dir) -> any:
         """ Reads the images and labels from main data directory and create lists of imgs and labels ."""
-        images = []
-        labels = []
+        images, labels = []
         # get the images and labels from main dataset
         for root, dirs, files in os.walk(main_dir):
             if len(files) == 0:
