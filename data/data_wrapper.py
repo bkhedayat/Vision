@@ -15,53 +15,31 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT))
 
 class CustomDataset(Dataset):
-    """
-    A Map-style custom dataset
-
-    Augs:
-        image_paths (list): list of image paths
-        label_paths (list): list of label paths
-        transform (obj): data augmentation pipeline
-    """
+    """ A Map-style custom dataset. """
     def __init__(self, image_paths, label_paths, transform=False):
         super().__init__()
         self.image_paths = image_paths
         self.label_paths = label_paths
 
-    def __len__(self):
-        """
-        Returns the length of the dataset
-
-        Returns:
-            int: number of samples in dataset
-        """
+    def __len__(self) -> int:
+        """ Returns the length of the dataset. """
         return len(self.image_paths)
 
-    def __getitem__(self, index):
-        """
-        Returns the set of image and label at the given index
-
-        Args:
-            index (int): desired index
-
-        Returns:
-            (list): image and label
-        """
-        # read the image
-        image = cv.imread(self.image_paths[index])
-
+    def __getitem__(self, index) -> list:
+        """ Returns the set of image and label at the given index. """
         # change the channel format BGR to RGB
-        image = cv.cvtColor(image, cv.COLOR_BGR2RGB)
+        image = cv.cvtColor(cv.imread(self.image_paths[index]), cv.COLOR_BGR2RGB)
+        if image == None:
+            raise Exception("CustomDataset: __getitem__ could not read the data.")
+        else:
+            label = []
+            f = open(self.label_paths[index], "r")
+            label = f.readline().split(" ")
 
-        label = []
-        f = open(self.label_paths[index], "r")
-        label = f.readline().split(" ")
-
-        # transform the image using augmentation pipline
-        if self.transfrom is not None:
-            image = self.transform(image=image)["image"]
-
-        return [image, label]
+            # transform the image using augmentation pipline
+            if self.transfrom is not None:
+                image = self.transform(image=image)["image"]
+            return [image, label]
 
 
 class DatasetHelper:
@@ -96,31 +74,25 @@ class DatasetHelper:
             LOGGER.error(f"create_datasets: {type(exp)}: {exp}")
             raise Exception("create_datasets: failed!")
  
-    def create_dataloaders(self, data_dict):
-        """
-        Creates Dataset objects from data_dict lists.
+    def create_dataloaders(self, data_dict) -> tuple:
+        """ Creates Dataset objects from data_dict lists. """
+        try:
+            # create Dataset objects
+            train_list, valid_list, test_list = data_dict["train"], data_dict["valid"], data_dict["test"]
+            train_dataset = CustomDataset(image_paths=train_list[0], label_paths=train_list[1])
+            valid_dataset = CustomDataset(image_paths=valid_list[0], label_paths=valid_list[1])
+            test_dataset = CustomDataset(image_paths=test_list[0], label_paths=test_list[1])
+        except Exception as exp:
+            LOGGER.error("create_dataloaders: create CustomDataset obj failed")
+            raise Exception("create_dataloaders: failed")
         
-        Args:
-            data_dict(dictionary): contains all the train / valid / test image & label lists
-
-        Returns:
-            train_loader, valid_loader, test_loader(Dataloader): dataloader objects of the dataset
-        """
-        # create Dataset objects
-        train_list = data_dict["train"]
-        valid_list = data_dict["valid"]
-        test_list = data_dict["test"]
-
-        train_dataset = CustomDataset(image_paths=train_list[0], label_paths=train_list[1])
-        valid_dataset = CustomDataset(image_paths=valid_list[0], label_paths=valid_list[1])
-        test_dataset = CustomDataset(image_paths=test_list[0], label_paths=test_list[1])
 
         # create dataloaders
         train_loader = DataLoader(train_dataset, batch_size=8, drop_last=True, shuffle=True)
         valid_loader = DataLoader(valid_dataset, batch_size=8, drop_last=True, shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size=1)
 
-        return train_loader, valid_loader, test_loader
+        return (train_loader, valid_loader, test_loader)
 
     
     def split_data(self, image_list, label_list) -> dict:
